@@ -21,6 +21,22 @@ Segment 1 ever changing.
 The script compiles the project and opens the application. Nothing else is
 needed — no Maven, no MySQL.
 
+**No Java installed yet?** Let the project bring its own:
+
+| Windows | macOS / Linux |
+|---|---|
+| double-click **`setup-java.bat`** | **`bash setup-java.sh`** |
+
+That downloads the official Eclipse Temurin JDK 17 into the project folder
+(`.jdk/`, about 320 MB) and the launcher uses it automatically. Nothing is
+installed system-wide, no administrator rights are needed and your `PATH` is
+left untouched — delete the `.jdk` folder to remove it completely.
+
+```bash
+bash setup-java.sh   # once
+bash run.sh          # every time
+```
+
 > On macOS / Linux, if `./run.sh` says *Permission denied*, either run
 > `bash run.sh` or make it executable once with `chmod +x run.sh`.
 

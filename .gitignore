@@ -16,3 +16,6 @@ Thumbs.db
 
 # Local settings with the database password
 app.local.properties
+
+# Private JDK installed by setup-java.sh / setup-java.bat (about 320 MB)
+.jdk/
