@@ -8,12 +8,21 @@ REM    run.bat --mysql  -> start the app against MySQL
 REM
 REM  Requirements: JDK 17 or newer.  Nothing else - no Maven, no MySQL.
 REM ---------------------------------------------------------------------------
-setlocal
+setlocal EnableDelayedExpansion
 cd /d "%~dp0"
 
 echo ==============================================
 echo   FindIt - Campus Lost ^& Found Management
 echo ==============================================
+
+REM --- use the project-local JDK if setup-java.bat installed one -------------
+if exist "%CD%\.jdk\java-home" (
+  set /p LOCAL_HOME=<"%CD%\.jdk\java-home"
+  if exist "!LOCAL_HOME!\bin\java.exe" (
+    set JAVA_HOME=!LOCAL_HOME!
+    set PATH=!JAVA_HOME!\bin;!PATH!
+  )
+)
 
 where java >nul 2>nul
 if errorlevel 1 (
@@ -27,6 +36,9 @@ if errorlevel 1 (
   echo   2. pick "Windows" + "x64" + "JDK" + the .msi installer
   echo   3. open the downloaded file and click through the installer
   echo   4. close and reopen this window, then double-click run.bat again
+  echo.
+  echo   Easiest - let the project install it for you (no admin rights):
+  echo       setup-java.bat
   echo.
   echo   After installing, check it with:  java -version
   echo.

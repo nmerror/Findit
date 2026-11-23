@@ -19,6 +19,15 @@ echo "=============================================="
 echo "  FindIt - Campus Lost & Found Management"
 echo "=============================================="
 
+# --- 0. use the project-local JDK if setup-java.sh installed one -----------
+if [ -f "$PWD/.jdk/java-home" ]; then
+  LOCAL_JAVA_HOME="$(cat "$PWD/.jdk/java-home")"
+  if [ -x "$LOCAL_JAVA_HOME/bin/java" ]; then
+    export JAVA_HOME="$LOCAL_JAVA_HOME"
+    export PATH="$JAVA_HOME/bin:$PATH"
+  fi
+fi
+
 # --- 1. check Java ---------------------------------------------------------
 if ! command -v java >/dev/null 2>&1; then
   echo ""
@@ -51,6 +60,9 @@ if ! command -v java >/dev/null 2>&1; then
       echo "      install it, reopen the terminal, then run run.bat again."
       ;;
   esac
+  echo ""
+  echo "  Easiest - let the project install it for you (no admin rights):"
+  echo "      bash setup-java.sh"
   echo ""
   echo "  After installing, check it with:  java -version"
   echo ""
