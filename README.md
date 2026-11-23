@@ -16,10 +16,13 @@ Segment 1 ever changing.
 
 | Windows | macOS / Linux |
 |---|---|
-| double-click **`run.bat`** | **`./run.sh`** |
+| double-click **`run.bat`** | **`bash run.sh`** |
 
 The script compiles the project and opens the application. Nothing else is
 needed — no Maven, no MySQL.
+
+> On macOS / Linux, if `./run.sh` says *Permission denied*, either run
+> `bash run.sh` or make it executable once with `chmod +x run.sh`.
 
 **Or by hand:**
 
