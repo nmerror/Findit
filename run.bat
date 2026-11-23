@@ -17,8 +17,19 @@ echo ==============================================
 
 where java >nul 2>nul
 if errorlevel 1 (
-  echo ERROR: java was not found on your PATH.
-  echo        Install JDK 17 or newer: https://adoptium.net/
+  echo.
+  echo ERROR: Java was not found on this computer.
+  echo.
+  echo   FindIt is a Java application, so it needs the JDK 17 or newer.
+  echo   It is free and takes about 3 minutes to install:
+  echo.
+  echo   1. open https://adoptium.net/temurin/releases/?version=17^&os=windows
+  echo   2. pick "Windows" + "x64" + "JDK" + the .msi installer
+  echo   3. open the downloaded file and click through the installer
+  echo   4. close and reopen this window, then double-click run.bat again
+  echo.
+  echo   After installing, check it with:  java -version
+  echo.
   exit /b 1
 )
 for /f "tokens=3" %%v in ('java -version 2^>^&1 ^| findstr "version"') do set JAVA_MAJOR=%%v
