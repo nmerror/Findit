@@ -12,8 +12,20 @@ Segment 1 ever changing.
 
 ## 1. Run it right now (no database needed)
 
+**The fastest way — one command, on any machine with JDK 17:**
+
+| Windows | macOS / Linux |
+|---|---|
+| double-click **`run.bat`** | **`./run.sh`** |
+
+The script compiles the project and opens the application. Nothing else is
+needed — no Maven, no MySQL.
+
+**Or by hand:**
+
 ```bash
 cd findit
+mvn -q compile
 java -cp target/classes com.bubt.findit.Main --memory
 ```
 
@@ -36,6 +48,13 @@ java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
 |---|---|
 | `--memory` | runs everything in RAM, no database server needed |
 | `--demo` | installs fake Segment 2/3/4 data so the dashboard looks complete |
+
+**Logins**
+
+| Role | E-mail | Password |
+|---|---|---|
+| ADMIN | `admin@findit.edu` | `Admin@1234` |
+| STUDENT | `ayesha@buet.edu` | `Student@123` |
 
 ---
 
