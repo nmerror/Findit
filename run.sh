@@ -3,13 +3,17 @@
 #  FindIt - Campus Lost & Found System
 #  One-command launcher for Segment 1 (no database needed).
 #
-#    ./run.sh          -> start the app with demo data
-#    ./run.sh --mysql  -> start the app against MySQL (see src/main/resources/app.properties)
+#    bash run.sh          -> start the app with demo data
+#    bash run.sh --mysql  -> start the app against MySQL (see app.properties)
 #
-#  Requirements: JDK 17 or newer.  Nothing else - no Maven, no MySQL.
+#  Requirements: JDK 17 or newer (it is free). Nothing else - no Maven, no MySQL.
 # ---------------------------------------------------------------------------
 set -e
-cd "$(dirname "$0")"
+# Resolve the folder of this script without depending on external commands.
+SCRIPT_PATH="${BASH_SOURCE[0]}"
+case "$SCRIPT_PATH" in
+  */*) cd "${SCRIPT_PATH%/*}" ;;
+esac
 
 echo "=============================================="
 echo "  FindIt - Campus Lost & Found Management"
@@ -17,17 +21,61 @@ echo "=============================================="
 
 # --- 1. check Java ---------------------------------------------------------
 if ! command -v java >/dev/null 2>&1; then
-  echo "ERROR: java was not found on your PATH."
-  echo "       Install JDK 17 or newer: https://adoptium.net/"
+  echo ""
+  echo "ERROR: Java was not found on this computer."
+  echo ""
+  echo "  FindIt is a Java application, so it needs the JDK 17 (or newer)."
+  echo "  It is free and takes about 3 minutes to install:"
+  echo ""
+  OS="$(uname -s 2>/dev/null || echo unknown)"
+  case "$OS" in
+    Darwin)
+      echo "  macOS - easiest way (Homebrew):"
+      echo "      brew install --cask temurin@17"
+      echo ""
+      echo "  macOS - without Homebrew:"
+      echo "      1. open https://adoptium.net/temurin/releases/?version=17"
+      echo "      2. pick macOS + your chip (aarch64 = Apple Silicon, x64 = Intel)"
+      echo "      3. download the .pkg file and open it - double-click to install"
+      echo "      4. close and reopen the terminal, then run: bash run.sh"
+      ;;
+    Linux)
+      echo "  Linux:"
+      echo "      sudo apt install openjdk-17-jdk"
+      echo "  or download the .tar.gz from https://adoptium.net/temurin/releases/?version=17"
+      ;;
+    *)
+      echo "  Windows - double-click run.bat instead of this script."
+      echo "  Or download the .msi for Windows from:"
+      echo "      https://adoptium.net/temurin/releases/?version=17&os=windows"
+      echo "      install it, reopen the terminal, then run run.bat again."
+      ;;
+  esac
+  echo ""
+  echo "  After installing, check it with:  java -version"
+  echo ""
   exit 1
 fi
 
 JAVA_MAJOR=$(java -version 2>&1 | head -1 | sed -E 's/.*version "([0-9]+).*/\1/')
 if [ "${JAVA_MAJOR:-0}" -lt 17 ]; then
-  echo "ERROR: Java 17 or newer is required (found: $(java -version 2>&1 | head -1))."
+  echo ""
+  echo "ERROR: Java 17 or newer is required, but this computer has:"
+  echo "       $(java -version 2>&1 | head -1)"
+  echo "       Install JDK 17+ from https://adoptium.net/temurin/releases/?version=17"
+  echo ""
   exit 1
 fi
 echo "Java:  $(java -version 2>&1 | head -1)"
+
+# A JRE can run the app but cannot compile it - catch that early.
+if ! command -v javac >/dev/null 2>&1; then
+  echo ""
+  echo "ERROR: 'javac' was not found - you have a JRE, not a JDK."
+  echo "       Install the full JDK 17+ from https://adoptium.net/temurin/releases/?version=17"
+  echo ""
+  exit 1
+fi
 
 # --- 2. compile ------------------------------------------------------------
 OUT=target/classes
