@@ -1,8 +1,6 @@
 package com.bubt.findit.core.spi;
 
-import com.bubt.findit.core.model.ItemSummary;
 
-import java.util.List;
 
 /**
  * ============================================================================
