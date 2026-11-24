@@ -63,6 +63,11 @@ if errorlevel 1 (
 xcopy /E /Y /I src\main\resources target\classes >nul
 echo Compiled.
 
+REM The MySQL driver lives in lib\ (fetched by setup-java.bat) - put it on the
+REM classpath when it is there.
+set CP=target\classes
+if exist lib\mysql-connector-j-8.4.0.jar set CP=target\classes;lib\*
+
 set MODE=--memory --demo
 if "%1"=="--mysql" (
   set MODE=
@@ -73,5 +78,5 @@ if "%1"=="--mysql" (
   echo    or: ayesha@buet.edu / Student@123   ^(STUDENT^)
 )
 
-java -cp target\classes com.bubt.findit.Main %MODE%
+java -cp %CP% com.bubt.findit.Main %MODE%
 endlocal

@@ -136,17 +136,34 @@ like one product.
 
 ## 5. Run it with MySQL (what the proposal asks for)
 
+**Step 1 — create the database.** The schema has the **whole project** in it:
+eight tables with foreign keys, indexes and constraints.
+
 ```bash
 mysql -u root -p < sql/01_schema.sql
 mysql -u root -p < sql/02_seed_data.sql
 ```
 
-Edit `src/main/resources/app.properties` (or put an `app.properties` next to
-your jar) with your MySQL user and password, then:
+**Step 2 — set your credentials.** Put an `app.properties` next to the project
+(it is not committed to GitHub):
+
+```properties
+app.mode   = mysql
+db.url     = jdbc:mysql://localhost:3306/findit?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+db.user    = root
+db.password = yourPassword
+db.pool.size = 8
+```
+
+**Step 3 — run it.**
 
 ```bash
-java -cp "target/classes:target/lib/*" com.bubt.findit.Main
+bash run.sh --mysql
 ```
+
+The launcher puts the MySQL driver (from `lib/`) on the classpath for you.
+With a database attached the dashboard, the report and the search read the
+**real tables** — the demo data is only used in memory mode.
 
 Seeded logins:
 
@@ -155,7 +172,9 @@ Seeded logins:
 | Administrator | `admin@findit.edu` | `Admin@1234` | ADMIN |
 | Student | `ayesha@buet.edu` | `Student@123` | STUDENT |
 
-## 6. Verify the Segment 1 logic (no GUI, no database)
+## 6. Verify the logic
+
+**Without a GUI and without a database** (43 checks):
 
 ```bash
 java -cp target/classes:target/test-classes com.bubt.findit.SelfTest
@@ -166,6 +185,16 @@ suspension, RBAC, session expiry, the event bus, the global search, the report
 builder, and — the important one — the dashboard and the search picking up a
 fake Segment 2 implementation **through the contract, with no change in
 Segment 1's code**.
+
+**Against the real database** (49 checks — users, audit trail, notifications,
+items, matches, claims, the contracts, transactions and the connection pool):
+
+```bash
+java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest
+```
+
+Run the second one after every change in `db/` — it is the test that catches
+the mistakes the in-memory mode hides.
 
 ---
 

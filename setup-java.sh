@@ -8,6 +8,9 @@
 #  (./.jdk) and points the launcher at it.  Nothing is installed system-wide,
 #  no administrator rights are needed, and your PATH is left untouched.
 #
+#  It also fetches the MySQL JDBC driver into ./lib so that the application can
+#  talk to a real database without Maven.
+#
 #  Needs only: bash, curl or wget, tar.
 # ---------------------------------------------------------------------------
 set -e
@@ -18,7 +21,10 @@ esac
 
 JDK_DIR="$PWD/.jdk"
 MARKER="$JDK_DIR/java-home"
+LIB_DIR="$PWD/lib"
 API="https://api.adoptium.net/v3/binary/latest/17/ga"
+DRIVER_URL="https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar"
+DRIVER_JAR="$LIB_DIR/mysql-connector-j-8.4.0.jar"
 
 # --- already installed? ----------------------------------------------------
 if [ -f "$MARKER" ] && [ -x "$(cat "$MARKER")/bin/java" ]; then
@@ -103,8 +109,23 @@ echo "  Java 17 is ready"
 echo "=============================================="
 "$JAVA_HOME_DIR/bin/java" -version 2>&1 | head -2
 "$JAVA_HOME_DIR/bin/javac" -version 2>&1 | head -1
+# --- the MySQL driver ------------------------------------------------------
+echo ""
+echo "Fetching the MySQL JDBC driver..."
+mkdir -p "$LIB_DIR"
+if command -v curl >/dev/null 2>&1; then
+  curl -fL --retry 3 --connect-timeout 30 -# -o "$DRIVER_JAR" "$DRIVER_URL"
+else
+  wget -q -O "$DRIVER_JAR" "$DRIVER_URL"
+fi
+echo "  saved to lib/$(basename "$DRIVER_JAR")"
+
+echo ""
+echo "=============================================="
+echo "  Everything is ready"
+echo "=============================================="
 echo ""
 echo "Next:  bash run.sh"
 echo ""
 echo "The JDK lives in this project folder only, so nothing outside it changed."
-echo "Delete the .jdk folder to remove it completely."
+echo "Delete the .jdk and lib folders to remove them completely."
