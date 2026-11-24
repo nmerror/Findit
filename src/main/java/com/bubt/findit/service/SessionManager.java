@@ -26,6 +26,9 @@ public class SessionManager {
     }
 
     public Session create(User user) {
+        // Remove the sessions that already expired - keeps the map small
+        // without a background timer.
+        purgeExpired();
         String token = UUID.randomUUID().toString();
         Instant now = Instant.now();
         Session session = new Session(token, user, now, now.plus(timeout));
@@ -66,8 +69,4 @@ public class SessionManager {
         return before - sessions.size();
     }
 
-    public int activeSessionCount() {
-        sessions.values().removeIf(Session::isExpired);
-        return sessions.size();
-    }
 }

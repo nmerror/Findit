@@ -1,7 +1,12 @@
 package com.bubt.findit.service;
 
 import com.bubt.findit.core.model.DashboardStats;
+import com.bubt.findit.core.registry.ServiceRegistry;
+import com.bubt.findit.core.spi.AdminWorkloadService;
 import com.bubt.findit.core.spi.AuditService;
+import com.bubt.findit.core.spi.ClaimQueryService;
+import com.bubt.findit.core.spi.ItemCatalogService;
+import com.bubt.findit.core.spi.MatchQueryService;
 import com.bubt.findit.core.model.ItemSummary;
 import com.bubt.findit.core.model.LocationCount;
 import com.bubt.findit.core.model.User;
@@ -51,6 +56,7 @@ public class ReportService {
         out.append("Scope          : whole system\n");
         out.append('\n');
 
+        appendSegmentStatus(out);
         out.append("1. ACCOUNTS  (Segment 1)\n");
         out.append("---------------------------------------------------------\n");
         out.append(row("Registered users", stats.getTotalUsers())).append('\n');
@@ -183,8 +189,48 @@ public class ReportService {
     }
 
     /** A "label ....... value" line. */
+    /**
+     * Section 0 of the report: which segments are connected right now.
+     *
+     * <p>During the presentation this shows at a glance that the dashboard
+     * really reads the other segments' tables.
+     */
+    private void appendSegmentStatus(StringBuilder out) {
+        out.append("0. CONNECTED SEGMENTS\n");
+        out.append("---------------------------------------------------------\n");
+        out.append(row("Segment 1 - accounts & audit", "connected")).append('\n');
+        out.append(row("Segment 2 - item catalog",
+                describe(ServiceRegistry.get(ItemCatalogService.class)))).append('\n');
+        out.append(row("Segment 3 - claims",
+                describe(ServiceRegistry.get(ClaimQueryService.class)))).append('\n');
+        out.append(row("Segment 3 - matching",
+                describe(ServiceRegistry.get(MatchQueryService.class)))).append('\n');
+        out.append(row("Segment 4 - verification",
+                describe(ServiceRegistry.get(AdminWorkloadService.class)))).append('\n');
+        out.append('\n');
+    }
+
+    /** "connected (database)", "connected (demo data)", "waiting (stub)" or "not connected". */
+    private String describe(Object implementation) {
+        if (implementation == null) {
+            return "not connected";
+        }
+        String pkg = implementation.getClass().getPackageName();
+        if (pkg.endsWith(".stub")) {
+            return "waiting (stub)";
+        }
+        if (pkg.endsWith(".data")) {
+            return "connected (database)";
+        }
+        return "connected (demo data)";
+    }
+
     private String row(String label, int value) {
         return pad(label, 30) + value;
+    }
+
+    private String row(String label, String value) {
+        return pad(label, 32) + value;
     }
 
     private String pad(String label, int width) {

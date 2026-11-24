@@ -32,8 +32,13 @@ import java.nio.file.Path;
  *   java -cp target/classes com.bubt.findit.tools.Screenshot segment2   segment2.png
  * </pre>
  *
- * <p>It always runs against the in-memory database, so it never touches your
- * real data.
+ * <p>By default it runs against the in-memory database, so it never touches
+ * your real data. Add {@code --mysql} as the third argument to take the
+ * picture against the real MySQL database instead:
+ *
+ * <pre>
+ *   java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot demo out.png --mysql
+ * </pre>
  */
 public final class Screenshot {
 
@@ -57,7 +62,8 @@ public final class Screenshot {
         }
         com.bubt.findit.ui.common.UiTheme.apply();
 
-        AppConfig config = AppConfig.memory();
+        boolean useMysql = args.length > 2 && "--mysql".equals(args[2]);
+        AppConfig config = useMysql ? AppConfig.load() : AppConfig.memory();
         Database.initialize(config);
         DaoFactory.reset();
         AppServices services = new AppServices(config);
@@ -65,7 +71,11 @@ public final class Screenshot {
         SwingUtilities.invokeAndWait(() -> {
             switch (screen) {
                 case "demo", "users", "audit", "reports" -> {
-                    DemoSegmentData.install();
+                    // With the real database we want the real rows, not the
+                    // fake demo data.
+                    if (!useMysql) {
+                        DemoSegmentData.install();
+                    }
                     seedAdmin(services);
                     services.authService().login("admin@findit.edu", "Admin@1234");
                     MainFrame frame = new MainFrame(services);
