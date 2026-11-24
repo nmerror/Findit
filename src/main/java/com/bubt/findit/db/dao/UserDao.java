@@ -46,4 +46,10 @@ public interface UserDao {
 
     /** Number of items of the given type reported by one user (Segment 2 fills the count). */
     long countReportsByUser(long userId, String itemType);
+
+    /**
+     * DELETE operation: removes the account and everything that belongs to it
+     * (the schema cascades to the notifications, items, claims and images).
+     */
+    boolean deleteById(long userId);
 }
