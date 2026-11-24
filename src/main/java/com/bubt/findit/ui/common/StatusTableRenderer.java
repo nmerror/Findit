@@ -3,7 +3,6 @@ package com.bubt.findit.ui.common;
 import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 

@@ -44,27 +44,9 @@ public class RoundedPanel extends JPanel {
         return this;
     }
 
-    public RoundedPanel setFill(Color value) {
-        this.fill = value;
-        repaint();
-        return this;
-    }
-
     /** Gradient from {@code top} to {@code fill}. */
     public RoundedPanel setGradient(Color top) {
         this.fillTop = top;
-        repaint();
-        return this;
-    }
-
-    public RoundedPanel setBorderColor(Color value) {
-        this.border = value;
-        repaint();
-        return this;
-    }
-
-    public RoundedPanel setNoBorder() {
-        this.drawBorder = false;
         repaint();
         return this;
     }
