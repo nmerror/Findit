@@ -82,15 +82,22 @@ replaced by one line at start-up.
 
 | File | Purpose |
 |---|---|
-| `Database.java` | Owns the JDBC connection, loads the MySQL driver |
+| `Database.java` | Owns the pool, hands out connections, runs transactions |
+| `ConnectionPool.java` | The pool: a connection is *returned* instead of closed |
 | `DaoFactory.java` | Chooses the JDBC DAO or the in-memory DAO |
-| `dao/UserDao.java` | Interface: read/insert/update the `users` table |
+| `dao/UserDao.java` | Interface: read/insert/update/delete the `users` table |
 | `dao/JdbcUserDao.java` | The MySQL implementation (PreparedStatement everywhere) |
 | `dao/InMemoryUserDao.java` | The in-memory implementation (no server needed) |
 | `dao/AuditDao.java` | Interface: read/insert/delete the `audit_log` table |
 | `dao/JdbcAuditDao.java` | The MySQL implementation |
 | `dao/InMemoryAuditDao.java` | The in-memory implementation |
 | `dao/AuditEntry.java` | One row of the audit log |
+| `dao/NotificationDao.java` | Interface: the in-app notifications |
+| `dao/JdbcNotificationDao.java` + `InMemoryNotificationDao.java` | The two implementations |
+| `dao/ItemDao.java` + `dao/JdbcItemDao.java` | Segment 2's items and locations |
+| `dao/ClaimDao.java` + `dao/JdbcClaimDao.java` | Segment 3's claims |
+| `dao/MatchDao.java` + `dao/JdbcMatchDao.java` | Segment 3's matches |
+| `dao/ItemRecord.java`, `ClaimRecord.java`, `MatchRecord.java` | The write-side rows |
 | `dao/DataAccessException.java` | Wraps `SQLException` so the service layer stays clean |
 
 ---
@@ -108,6 +115,18 @@ replaced by one line at start-up.
 | `ReportService.java` | Builds the text/CSV report and exports it |
 | `AuditServiceImpl.java` | Writes into `audit_log` |
 | `AccessDeniedException.java` | Thrown when a role is not allowed to do something |
+
+### `service/data/` — the database-backed contracts (5 files)
+| File | Purpose |
+|---|---|
+| `ItemCatalogServiceImpl.java` | Segment 2's contract, reading the real `items` table |
+| `ClaimQueryServiceImpl.java` | Segment 3's claim contract, reading the real `claims` table |
+| `MatchQueryServiceImpl.java` | Segment 3's match contract, reading the real `matches` table |
+| `AdminWorkloadServiceImpl.java` | Segment 4's workload contract, reading the real tables |
+| `NotificationServiceImpl.java` | Segment 1's notifications, stored in the database |
+
+They are **reference implementations** — the owning segment can replace any
+of them with their own class and nothing else has to change.
 
 ---
 
@@ -164,6 +183,7 @@ replaced by one line at start-up.
 | `tools/Screenshot.java` | Takes a screenshot of any screen — for the report and the slides |
 | `tools/DemoSegmentData.java` | Fake Segment 2/3/4 data so the dashboard can be presented early |
 | `src/test/java/.../SelfTest.java` | 43 checks that run without a GUI and without a database |
+| `src/test/java/.../BackendSelfTest.java` | 49 checks against the real MySQL database |
 | `sql/01_schema.sql` | The database schema — the contract between the segments |
 
 ---
@@ -173,6 +193,7 @@ replaced by one line at start-up.
 | File | Read it when |
 |---|---|
 | `docs/PROPOSAL_TRACEABILITY.md` | you fill the proposal or you answer "who did what?" |
+| `docs/BACKEND_DESIGN.md` | you want to change the database layer or add a table |
 | `docs/INTEGRATION_CONTRACT.md` | you explain to a teammate what they must implement |
 | `docs/SEGMENT1_DESIGN.md` | you want to know why the code is built this way |
 | `docs/START_HERE.md` | you want the day-by-day build order |
