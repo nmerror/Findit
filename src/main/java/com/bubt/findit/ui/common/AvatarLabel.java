@@ -24,11 +24,6 @@ public class AvatarLabel extends JComponent {
         setOpaque(false);
     }
 
-    public void setInitials(String value) {
-        this.initials = value == null || value.isBlank() ? "?" : value;
-        repaint();
-    }
-
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();

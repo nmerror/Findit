@@ -153,8 +153,20 @@ public class JdbcUserDao implements UserDao {
     }
 
     @Override
+    public boolean deleteById(long userId) {
+        String sql = "DELETE FROM users WHERE user_id = ?";
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+            statement.setLong(1, userId);
+            return statement.executeUpdate() > 0;
+        } catch (SQLException ex) {
+            throw new DataAccessException("Could not delete the user", ex);
+        }
+    }
+
+    @Override
     public long countReportsByUser(long userId, String itemType) {
-        String sql = "SELECT COUNT(*) FROM items WHERE posted_by = ? AND item_type = ?";
+        String sql = "SELECT COUNT(*) FROM items WHERE reported_by = ? AND item_type = ?";
         try (Connection connection = Database.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
             statement.setLong(1, userId);

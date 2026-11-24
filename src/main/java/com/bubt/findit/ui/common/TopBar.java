@@ -1,17 +1,10 @@
 package com.bubt.findit.ui.common;
 
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.Timer;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.RoundRectangle2D;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -139,13 +132,5 @@ public class TopBar extends JPanel {
     /** Changes the page title when the user navigates to another screen. */
     public void setTitle(String title) {
         titleLabel.setText(title);
-    }
-
-    public void setSubtitle(String subtitle) {
-        subtitleLabel.setText(subtitle);
-    }
-
-    public AvatarLabel getAvatar() {
-        return avatar;
     }
 }

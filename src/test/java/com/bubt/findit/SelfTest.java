@@ -2,7 +2,6 @@ package com.bubt.findit;
 
 import com.bubt.findit.app.AppServices;
 import com.bubt.findit.config.AppConfig;
-import com.bubt.findit.core.AuthContext;
 import com.bubt.findit.core.event.AppEvent;
 import com.bubt.findit.core.event.Events;
 import com.bubt.findit.core.model.DashboardStats;

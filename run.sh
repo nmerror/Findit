@@ -98,6 +98,14 @@ javac -encoding UTF-8 -d "$OUT" @target/sources.txt
 cp -r src/main/resources/* "$OUT"/ 2>/dev/null || true
 echo "Compiled $(wc -l < target/sources.txt) source files."
 
+# The MySQL driver lives in lib/ (fetched by setup-java.sh) - put it on the
+# classpath when it is there.
+CP="$OUT"
+if [ -d lib ] && [ -n "$(ls -A lib 2>/dev/null)" ]; then
+  CP="$OUT:lib/*"
+  echo "MySQL driver: $(ls lib | head -1)"
+fi
+
 # --- 3. run ----------------------------------------------------------------
 MODE="--memory --demo"
 if [ "${1:-}" = "--mysql" ]; then
@@ -109,4 +117,4 @@ else
   echo "   or: ayesha@buet.edu / Student@123   (STUDENT)"
 fi
 
-java -cp "$OUT" com.bubt.findit.Main $MODE
+java -cp "$CP" com.bubt.findit.Main $MODE

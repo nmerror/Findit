@@ -8,7 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -134,5 +133,10 @@ public class InMemoryUserDao implements UserDao {
     public long countReportsByUser(long userId, String itemType) {
         // Segment 2 owns the items table; in memory mode we have no item data.
         return 0;
+    }
+
+    @Override
+    public boolean deleteById(long userId) {
+        return users.remove(userId) != null;
     }
 }

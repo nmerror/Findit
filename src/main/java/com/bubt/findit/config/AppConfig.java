@@ -27,6 +27,7 @@ public class AppConfig {
     private final String dbDriver;
     private final int sessionTimeoutMinutes;
     private final String theme;
+    private final int dbPoolSize;
 
     public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
                      String dbPassword, String dbDriver, int sessionTimeoutMinutes) {
@@ -35,6 +36,12 @@ public class AppConfig {
 
     public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
                      String dbPassword, String dbDriver, int sessionTimeoutMinutes, String theme) {
+        this(appName, mysqlMode, dbUrl, dbUser, dbPassword, dbDriver, sessionTimeoutMinutes, theme, 8);
+    }
+
+    public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
+                     String dbPassword, String dbDriver, int sessionTimeoutMinutes, String theme,
+                     int dbPoolSize) {
         this.appName = appName;
         this.mysqlMode = mysqlMode;
         this.dbUrl = dbUrl;
@@ -43,6 +50,7 @@ public class AppConfig {
         this.dbDriver = dbDriver;
         this.sessionTimeoutMinutes = sessionTimeoutMinutes;
         this.theme = theme == null ? "dark" : theme;
+        this.dbPoolSize = dbPoolSize < 1 ? 1 : dbPoolSize;
     }
 
     /** Reads {@code app.properties} from the classpath, then from the working directory. */
@@ -75,12 +83,13 @@ public class AppConfig {
                 props.getProperty("db.password", ""),
                 props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver"),
                 Integer.parseInt(props.getProperty("session.timeout.minutes", "60")),
-                props.getProperty("app.theme", "dark"));
+                props.getProperty("app.theme", "dark"),
+                Integer.parseInt(props.getProperty("db.pool.size", "8")));
     }
 
     /** In-memory configuration - no MySQL server needed. */
     public static AppConfig memory() {
-        return new AppConfig("FindIt", false, "", "", "", "", 60, "dark");
+        return new AppConfig("FindIt", false, "", "", "", "", 60, "dark", 4);
     }
 
     public String appName() {
@@ -114,6 +123,11 @@ public class AppConfig {
     /** "dark" or "light" - the palette the application starts in. */
     public String theme() {
         return theme;
+    }
+
+    /** How many JDBC connections the pool keeps open (see db.pool.size). */
+    public int dbPoolSize() {
+        return dbPoolSize;
     }
 
     /**
