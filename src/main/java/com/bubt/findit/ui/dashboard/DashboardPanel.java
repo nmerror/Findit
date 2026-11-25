@@ -5,7 +5,7 @@ import com.bubt.findit.core.model.ItemSummary;
 import com.bubt.findit.core.model.User;
 import com.bubt.findit.service.DashboardService;
 import com.bubt.findit.ui.common.BarList;
-import com.bubt.findit.ui.common.DonutChart;
+import com.bubt.findit.ui.common.StackedBar;
 import com.bubt.findit.ui.common.Fonts;
 import com.bubt.findit.ui.common.Icons;
 import com.bubt.findit.ui.common.ModernTable;
@@ -39,6 +39,10 @@ import java.util.List;
  */
 public class DashboardPanel extends JPanel {
 
+    /** All rows of the dashboard share this alignment, so they are all
+     *  stretched over the full width of the window. */
+    private static final float ROW_ALIGNMENT = 0.5f;
+
     private final DashboardService dashboardService;
     private final User viewer;
 
@@ -46,7 +50,7 @@ public class DashboardPanel extends JPanel {
     private final StatCard foundCard;
     private final StatCard claimsCard;
     private final StatCard usersCard;
-    private final DonutChart donut = new DonutChart();
+    private final StackedBar claimBar = new StackedBar();
     private final BarList barList = new BarList();
     private final JLabel hintLabel = new JLabel(" ");
     private final DefaultTableModel model = new DefaultTableModel(
@@ -86,29 +90,33 @@ public class DashboardPanel extends JPanel {
         }
         table.getColumnModel().getColumn(5).setCellRenderer(new StatusTableRenderer());
 
+        // The rows are stacked in a vertical box. Every row uses the same
+        // alignment, so all of them get the full width of the window.
         StretchPanel body = StretchPanel.vertical();
         body.setOpaque(false);
 
-        cards.setAlignmentX(LEFT_ALIGNMENT);
-        cards.setMaximumSize(new Dimension(Integer.MAX_VALUE, 140));
-        cards.setMinimumSize(new Dimension(560, 140));
+        cards.setAlignmentX(ROW_ALIGNMENT);
+        cards.setMaximumSize(new Dimension(Integer.MAX_VALUE, 132));
+        cards.setMinimumSize(new Dimension(520, 132));
         body.add(cards);
         body.add(Box.createVerticalStrut(14));
 
         JPanel charts = new JPanel(new GridLayout(1, 2, 14, 0));
         charts.setOpaque(false);
-        charts.add(buildDonutCard());
+        charts.add(buildClaimsCard());
         charts.add(buildLocationsCard());
-        charts.setAlignmentX(LEFT_ALIGNMENT);
-        charts.setMaximumSize(new Dimension(Integer.MAX_VALUE, 280));
+        charts.setAlignmentX(ROW_ALIGNMENT);
+        charts.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
         body.add(charts);
         body.add(Box.createVerticalStrut(14));
 
-        body.add(buildItemsCard());
+        JPanel items = buildItemsCard();
+        items.setAlignmentX(ROW_ALIGNMENT);
+        body.add(items);
 
         hintLabel.setFont(Fonts.body(12));
         hintLabel.setForeground(UiTheme.AMBER);
-        hintLabel.setAlignmentX(LEFT_ALIGNMENT);
+        hintLabel.setAlignmentX(ROW_ALIGNMENT);
         body.add(Box.createVerticalStrut(10));
         body.add(hintLabel);
 
@@ -126,7 +134,7 @@ public class DashboardPanel extends JPanel {
 
     // ------------------------------------------------------------- panels
 
-    private JPanel buildDonutCard() {
+    private JPanel buildClaimsCard() {
         RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
         card.setLayout(new BorderLayout());
         card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
@@ -135,58 +143,12 @@ public class DashboardPanel extends JPanel {
 
         JPanel chartArea = new JPanel(new BorderLayout());
         chartArea.setOpaque(false);
-        donut.setPreferredSize(new Dimension(170, 170));
-        chartArea.add(donut, BorderLayout.CENTER);
-        chartArea.add(buildLegend(), BorderLayout.EAST);
+        claimBar.setPreferredSize(new Dimension(320, 120));
+        claimBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+        chartArea.add(claimBar, BorderLayout.CENTER);
 
         card.add(chartArea, BorderLayout.CENTER);
         return card;
-    }
-
-    private JComponent buildLegend() {
-        JPanel legend = new JPanel();
-        legend.setOpaque(false);
-        legend.setLayout(new BoxLayout(legend, BoxLayout.Y_AXIS));
-        legend.add(legendRow(UiTheme.AMBER, "Open"));
-        legend.add(Box.createVerticalStrut(8));
-        legend.add(legendRow(UiTheme.MINT, "Approved"));
-        legend.add(Box.createVerticalStrut(8));
-        legend.add(legendRow(UiTheme.ACCENT, "Returned"));
-        legend.add(Box.createVerticalStrut(8));
-        legend.add(legendRow(UiTheme.VIOLET, "Pending"));
-        return legend;
-    }
-
-    private JComponent legendRow(Color color, String text) {
-        JPanel row = new JPanel(new BorderLayout(8, 0));
-        row.setOpaque(false);
-        row.setMaximumSize(new Dimension(120, 20));
-
-        JPanel dot = new JPanel() {
-            @Override
-            protected void paintComponent(java.awt.Graphics g) {
-                java.awt.Graphics2D g2 = (java.awt.Graphics2D) g.create();
-                g2.setRenderingHint(java.awt.RenderingHints.KEY_ANTIALIASING,
-                        java.awt.RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(color);
-                g2.fillOval(0, 3, 10, 10);
-                g2.dispose();
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(10, 16);
-            }
-        };
-        dot.setOpaque(false);
-
-        JLabel label = new JLabel(text);
-        label.setFont(Fonts.body(12));
-        label.setForeground(UiTheme.TEXT_DIM);
-
-        row.add(dot, BorderLayout.WEST);
-        row.add(label, BorderLayout.CENTER);
-        return row;
     }
 
     private JPanel buildLocationsCard() {
@@ -242,13 +204,12 @@ public class DashboardPanel extends JPanel {
             usersCard.setDetail(stats.getMyLostReports() + " lost · " + stats.getMyFoundReports() + " found by me");
         }
 
-        int total = stats.getOpenClaims() + stats.getApprovedClaims() + stats.getReturnedItems();
-        donut.setSlices(List.of(
-                new DonutChart.Slice("Open", stats.getOpenClaims(), UiTheme.AMBER),
-                new DonutChart.Slice("Approved", stats.getApprovedClaims(), UiTheme.MINT),
-                new DonutChart.Slice("Returned", stats.getReturnedItems(), UiTheme.ACCENT),
-                new DonutChart.Slice("Pending", stats.getPendingVerification(), UiTheme.VIOLET)));
-        donut.setCenter(String.valueOf(total), "CLAIMS");
+        claimBar.setSlices(List.of(
+                new StackedBar.Slice("Open", stats.getOpenClaims(), UiTheme.AMBER),
+                new StackedBar.Slice("Approved", stats.getApprovedClaims(), UiTheme.MINT),
+                new StackedBar.Slice("Returned", stats.getReturnedItems(), UiTheme.ACCENT),
+                new StackedBar.Slice("Pending", stats.getPendingVerification(), UiTheme.VIOLET)));
+        claimBar.setTotalLabel("claims");
 
         barList.setItems(stats.getTopLocations());
 

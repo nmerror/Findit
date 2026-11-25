@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Horizontal bars for the "busiest locations" chart - each bar is a gradient
- * that fades towards its end, which reads as a modern data panel.
+ * Horizontal bars for the "busiest locations" chart - one flat bar per
+ * location, the length shows the number of reports.
  */
 public class BarList extends JComponent {
 
@@ -73,8 +73,7 @@ public class BarList extends JComponent {
             g2.setColor(UiTheme.alpha(UiTheme.SURFACE_3, 120));
             g2.fill(new RoundRectangle2D.Float(trackX, y + 3, Math.max(barWidth, 10), 13, 7, 7));
 
-            g2.setPaint(new java.awt.GradientPaint(trackX, y, entry.color(),
-                    trackX + width, y, UiTheme.alpha(entry.color(), 60)));
+            g2.setColor(entry.color());
             g2.fill(new RoundRectangle2D.Float(trackX, y + 3, width, 13, 7, 7));
 
             g2.setColor(UiTheme.TEXT);

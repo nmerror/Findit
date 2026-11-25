@@ -4,11 +4,9 @@ import com.bubt.findit.app.AppServices;
 import com.bubt.findit.core.model.OperationResult;
 import com.bubt.findit.core.model.Session;
 import com.bubt.findit.ui.MainFrame;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.BaseFrame;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GradientBackdrop;
-import com.bubt.findit.ui.common.GlowButton;
-import com.bubt.findit.ui.common.Icons;
 import com.bubt.findit.ui.common.ModernPasswordField;
 import com.bubt.findit.ui.common.ModernTextField;
 import com.bubt.findit.ui.common.RoundedPanel;
@@ -20,15 +18,14 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
 
 /**
- * The login screen: a branded hero on the left, the sign-in card on the
- * right. The identifier accepts either the e-mail address or the student ID.
+ * The login screen: one form in the middle of the window.
+ *
+ * <p>The identifier accepts either the e-mail address or the student ID. When
+ * the credentials are correct the main window opens, otherwise the message
+ * under the fields explains what went wrong.
  */
 public class LoginFrame extends BaseFrame {
 
@@ -38,112 +35,19 @@ public class LoginFrame extends BaseFrame {
     private final JLabel messageLabel = new JLabel(" ");
 
     public LoginFrame(AppServices services) {
-        super(services.config().appName(), "Campus Lost & Found Management System", 1080, 690);
+        super(services.config().appName(), "Campus Lost & Found Management System", 880, 560);
         this.services = services;
 
         buildScreen();
     }
 
-    /** (Re)builds the screen with the current palette. */
     private void buildScreen() {
         getContent().removeAll();
         getContent().setBackground(UiTheme.WINDOW);
-        getContent().add(buildHero(), BorderLayout.WEST);
         getContent().add(buildFormArea(), BorderLayout.CENTER);
+        getContent().add(buildFooter(), BorderLayout.SOUTH);
         getContent().revalidate();
         getContent().repaint();
-    }
-
-    @Override
-    protected void onThemeChanged() {
-        buildScreen();
-    }
-
-    @Override
-    protected void onThemePersisted() {
-        services.config().saveTheme(UiTheme.mode().name().toLowerCase());
-    }
-
-    // --------------------------------------------------------------- hero
-
-    private JPanel buildHero() {
-        JPanel hero = new JPanel(new BorderLayout());
-        hero.setPreferredSize(new Dimension(520, 10));
-        hero.setOpaque(false);
-
-        hero.add(new GradientBackdrop(UiTheme.WINDOW_DEEP, UiTheme.WINDOW, UiTheme.ACCENT),
-                BorderLayout.CENTER);
-
-        JPanel overlay = new JPanel();
-        overlay.setOpaque(false);
-        overlay.setLayout(new BoxLayout(overlay, BoxLayout.Y_AXIS));
-        overlay.setBorder(javax.swing.BorderFactory.createEmptyBorder(54, 52, 44, 52));
-
-        JLabel brand = new JLabel("FindIt");
-        brand.setFont(Fonts.display(46));
-        brand.setForeground(UiTheme.TEXT);
-        brand.setAlignmentX(LEFT_ALIGNMENT);
-
-        JLabel tagline = new JLabel("<html>"
-                + "Lost something on campus? Found something that belongs to someone else? "
-                + "FindIt matches the two, verifies the claim and returns the item to its owner."
-                + "</html>");
-        tagline.setFont(Fonts.body(14));
-        tagline.setForeground(UiTheme.TEXT_DIM);
-        tagline.setAlignmentX(LEFT_ALIGNMENT);
-        tagline.setPreferredSize(new Dimension(400, 74));
-        tagline.setMaximumSize(new Dimension(400, 74));
-
-        overlay.add(brand);
-        overlay.add(Box.createVerticalStrut(14));
-        overlay.add(tagline);
-        overlay.add(Box.createVerticalStrut(34));
-
-        overlay.add(feature("Smart matching of lost and found items", UiTheme.ACCENT));
-        overlay.add(Box.createVerticalStrut(12));
-        overlay.add(feature("Photo evidence and admin verification", UiTheme.VIOLET));
-        overlay.add(Box.createVerticalStrut(12));
-        overlay.add(feature("Role based access for students and administrators", UiTheme.MINT));
-
-        overlay.add(Box.createVerticalGlue());
-
-        JLabel footer = new JLabel("BUBT  ·  Java Project  ·  Swing + MySQL (JDBC)");
-        footer.setFont(Fonts.caption(11));
-        footer.setForeground(UiTheme.TEXT_MUTE);
-        footer.setAlignmentX(LEFT_ALIGNMENT);
-        overlay.add(footer);
-
-        hero.add(overlay, BorderLayout.CENTER);
-        return hero;
-    }
-
-    private JComponent feature(String text, Color accent) {
-        JComponent row = new JComponent() {
-            @Override
-            protected void paintComponent(Graphics g) {
-                Graphics2D g2 = (Graphics2D) g.create();
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.setColor(UiTheme.alpha(accent, 28));
-                g2.fillRoundRect(0, 2, 22, 22, 8, 8);
-                Icons.draw(g2, Icons.Glyph.CHECK, 4, 5, 14, accent);
-                g2.setColor(UiTheme.TEXT_DIM);
-                g2.setFont(Fonts.body(13));
-                g2.drawString(text, 32, 18);
-                g2.dispose();
-            }
-
-            @Override
-            public Dimension getPreferredSize() {
-                return new Dimension(420, 26);
-            }
-
-            @Override
-            public Dimension getMaximumSize() {
-                return new Dimension(Integer.MAX_VALUE, 26);
-            }
-        };
-        row.setAlignmentX(LEFT_ALIGNMENT);
-        return row;
     }
 
     // --------------------------------------------------------------- form
@@ -152,37 +56,35 @@ public class LoginFrame extends BaseFrame {
         JPanel area = new JPanel(new java.awt.GridBagLayout());
         area.setBackground(UiTheme.WINDOW);
 
-        RoundedPanel card = new RoundedPanel(UiTheme.R_XL, UiTheme.SURFACE, UiTheme.STROKE);
-        card.setGradient(UiTheme.CARD_GRADIENT);
-        card.setGlow(UiTheme.ACCENT, 26);
+        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(javax.swing.BorderFactory.createEmptyBorder(34, 38, 30, 38));
-        card.setPreferredSize(new Dimension(400, 424));
+        card.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 34, 26, 34));
+        card.setPreferredSize(new Dimension(400, 378));
 
-        JLabel heading = new JLabel("Welcome back");
-        heading.setFont(Fonts.display(26));
-        heading.setForeground(UiTheme.TEXT);
-        heading.setAlignmentX(LEFT_ALIGNMENT);
+        JLabel brand = new JLabel(services.config().appName());
+        brand.setFont(Fonts.display(24));
+        brand.setForeground(UiTheme.TEXT);
+        brand.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel sub = new JLabel("Sign in to continue to your dashboard.");
-        sub.setFont(Fonts.body(13));
+        JLabel sub = new JLabel("Campus Lost & Found Management System");
+        sub.setFont(Fonts.body(12));
         sub.setForeground(UiTheme.TEXT_MUTE);
         sub.setAlignmentX(LEFT_ALIGNMENT);
 
-        card.add(heading);
-        card.add(Box.createVerticalStrut(6));
+        card.add(brand);
+        card.add(Box.createVerticalStrut(4));
         card.add(sub);
-        card.add(Box.createVerticalStrut(26));
+        card.add(Box.createVerticalStrut(22));
 
         card.add(label("E-mail or Student ID"));
-        card.add(Box.createVerticalStrut(7));
+        card.add(Box.createVerticalStrut(6));
         card.add(fullWidth(identifierField));
-        card.add(Box.createVerticalStrut(16));
+        card.add(Box.createVerticalStrut(14));
 
         card.add(label("Password"));
-        card.add(Box.createVerticalStrut(7));
+        card.add(Box.createVerticalStrut(6));
         card.add(fullWidth(passwordField));
-        card.add(Box.createVerticalStrut(10));
+        card.add(Box.createVerticalStrut(8));
 
         messageLabel.setFont(Fonts.body(12));
         messageLabel.setForeground(UiTheme.ROSE);
@@ -190,18 +92,31 @@ public class LoginFrame extends BaseFrame {
         card.add(messageLabel);
         card.add(Box.createVerticalStrut(8));
 
-        GlowButton signIn = new GlowButton("Sign in", GlowButton.Kind.PRIMARY);
+        AppButton signIn = new AppButton("Sign in", AppButton.Kind.PRIMARY);
         signIn.setAlignmentX(LEFT_ALIGNMENT);
-        signIn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
+        signIn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         signIn.addActionListener(event -> performLogin());
         card.add(signIn);
-        card.add(Box.createVerticalStrut(16));
+        card.add(Box.createVerticalStrut(14));
 
         JLabel registerLink = linkLabel("Create a new student account", this::openRegisterFrame);
         card.add(registerLink);
 
         area.add(card);
         return area;
+    }
+
+    private JPanel buildFooter() {
+        JPanel footer = new JPanel();
+        footer.setOpaque(false);
+        footer.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 18, 0));
+
+        JLabel note = new JLabel("BUBT  ·  Advanced Programming Lab (CSE 342)  ·  Swing + MySQL (JDBC)");
+        note.setFont(Fonts.caption(11));
+        note.setForeground(UiTheme.TEXT_MUTE);
+        note.setHorizontalAlignment(JLabel.CENTER);
+        footer.add(note);
+        return footer;
     }
 
     private JLabel label(String text) {
@@ -214,7 +129,7 @@ public class LoginFrame extends BaseFrame {
 
     private JComponent fullWidth(JComponent component) {
         component.setAlignmentX(LEFT_ALIGNMENT);
-        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
+        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
         return component;
     }
 

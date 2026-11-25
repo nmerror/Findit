@@ -5,7 +5,7 @@ import com.bubt.findit.core.model.OperationResult;
 import com.bubt.findit.core.model.User;
 import com.bubt.findit.ui.common.BaseFrame;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GlowButton;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.ModernPasswordField;
 import com.bubt.findit.ui.common.ModernTextField;
 import com.bubt.findit.ui.common.RoundedPanel;
@@ -46,23 +46,11 @@ public class RegisterFrame extends BaseFrame {
         getContent().repaint();
     }
 
-    @Override
-    protected void onThemeChanged() {
-        buildScreen();
-    }
-
-    @Override
-    protected void onThemePersisted() {
-        services.config().saveTheme(UiTheme.mode().name().toLowerCase());
-    }
-
     private JPanel buildFormArea() {
         JPanel area = new JPanel(new java.awt.GridBagLayout());
         area.setBackground(UiTheme.WINDOW);
 
-        RoundedPanel card = new RoundedPanel(UiTheme.R_XL, UiTheme.SURFACE, UiTheme.STROKE);
-        card.setGradient(UiTheme.CARD_GRADIENT);
-        card.setGlow(UiTheme.VIOLET, 24);
+        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
         card.setBorder(javax.swing.BorderFactory.createEmptyBorder(32, 36, 28, 36));
         card.setPreferredSize(new Dimension(430, 620));
@@ -113,7 +101,7 @@ public class RegisterFrame extends BaseFrame {
         card.add(messageLabel);
         card.add(Box.createVerticalStrut(10));
 
-        GlowButton create = new GlowButton("Create account", GlowButton.Kind.PRIMARY);
+        AppButton create = new AppButton("Create account", AppButton.Kind.PRIMARY);
         create.setAccent(UiTheme.VIOLET);
         create.setAlignmentX(LEFT_ALIGNMENT);
         create.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));

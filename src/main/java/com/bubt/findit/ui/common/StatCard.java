@@ -75,7 +75,7 @@ public class StatCard extends RoundedPanel {
     }
 
     public void setAccent(Color accent) {
-        value.setForeground(UiTheme.mix(accent, Color.WHITE, 0.25));
+        value.setForeground(UiTheme.darken(accent, 0.78f));
     }
 
     /** A circular badge that holds one vector glyph. */

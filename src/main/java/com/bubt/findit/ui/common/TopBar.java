@@ -21,14 +21,15 @@ public class TopBar extends JPanel {
     private final JLabel subtitleLabel = new JLabel();
     private final JLabel clockLabel = new JLabel();
     private final JLabel dateLabel = new JLabel();
-    private final JLabel greetingLabel = new JLabel();
     private final AvatarLabel avatar;
 
     public TopBar(String title, String subtitle, com.bubt.findit.core.model.User user,
                   String searchHint, java.util.function.Consumer<String> onSearch) {
         super(new BorderLayout());
         setBackground(UiTheme.WINDOW);
-        setBorder(javax.swing.BorderFactory.createEmptyBorder(18, 26, 14, 26));
+        setBorder(javax.swing.BorderFactory.createCompoundBorder(
+                javax.swing.BorderFactory.createMatteBorder(0, 0, 1, 0, UiTheme.STROKE_SOFT),
+                javax.swing.BorderFactory.createEmptyBorder(16, 24, 14, 24)));
 
         // ------------------------------------------------------------ left
         JPanel left = new JPanel(new BorderLayout(0, 3));
@@ -101,14 +102,10 @@ public class TopBar extends JPanel {
         clockPanel.add(clockLabel);
         clockPanel.add(dateLabel);
 
-        greetingLabel.setFont(Fonts.body(12));
-        greetingLabel.setForeground(UiTheme.TEXT_DIM);
-
         avatar = new AvatarLabel(user == null ? "?" : user.initials(),
                 user != null && user.isAdmin() ? UiTheme.VIOLET : UiTheme.ACCENT, 36);
 
         right.add(clockPanel);
-        right.add(greetingLabel);
         right.add(avatar);
 
         add(left, BorderLayout.WEST);
@@ -124,9 +121,6 @@ public class TopBar extends JPanel {
         clockLabel.setText(LocalDateTime.now().format(CLOCK));
         dateLabel.setText(LocalDateTime.now().format(DATE));
 
-        if (user != null) {
-            greetingLabel.setText(user.getFullName() + "  ·  " + user.getRole().label());
-        }
     }
 
     /** Changes the page title when the user navigates to another screen. */

@@ -10,8 +10,8 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.Component;
 
 /**
- * Table styling: dark rows, no grid lines, a slim accent-highlighted header
- * and a subtle selection colour.
+ * Table styling: light rows with a soft stripe, a quiet header and the
+ * selection colour of the application.
  */
 public final class ModernTable {
 
@@ -50,14 +50,14 @@ public final class ModernTable {
                 label.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 14, 0, 10));
                 label.setOpaque(true);
                 label.setBackground(isSelected ? UiTheme.SELECTION
-                        : (row % 2 == 0 ? UiTheme.SURFACE : UiTheme.alpha(UiTheme.SURFACE_2, 120)));
+                        : (row % 2 == 0 ? UiTheme.SURFACE : new java.awt.Color(0xFAFBFD)));
             }
             return component;
         });
         return table;
     }
 
-    /** A scroll pane that fits the dark look. */
+    /** A scroll pane without a border, so the table sits in its card. */
     public static JScrollPane scroll(JTable table) {
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(javax.swing.BorderFactory.createEmptyBorder());

@@ -9,18 +9,17 @@ import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * A panel with rounded corners, an optional luminous border and an optional
- * gradient fill. This is the base of every card in the new interface.
+ * A card: a flat surface with a thin border and slightly rounded corners.
+ *
+ * <p>This is the base of every panel of the interface. It is deliberately
+ * plain - one fill colour and one border - so that a screen made of many
+ * cards still looks calm.
  */
 public class RoundedPanel extends JPanel {
 
     private int radius = UiTheme.R_LG;
     private Color fill = UiTheme.SURFACE;
-    private Color fillTop;
     private Color border = UiTheme.STROKE;
-    private Color glow;
-    private int glowSize = 18;
-    private boolean drawBorder = true;
 
     public RoundedPanel() {
         this(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
@@ -44,17 +43,16 @@ public class RoundedPanel extends JPanel {
         return this;
     }
 
-    /** Gradient from {@code top} to {@code fill}. */
-    public RoundedPanel setGradient(Color top) {
-        this.fillTop = top;
+    /** The fill colour of the card. */
+    public RoundedPanel setFillColor(Color value) {
+        this.fill = value;
         repaint();
         return this;
     }
 
-    /** Adds a soft coloured halo behind the card. */
-    public RoundedPanel setGlow(Color color, int size) {
-        this.glow = color;
-        this.glowSize = size;
+    /** The border colour of the card. */
+    public RoundedPanel setBorderColor(Color value) {
+        this.border = value;
         repaint();
         return this;
     }
@@ -73,23 +71,10 @@ public class RoundedPanel extends JPanel {
             return;
         }
 
-        if (glow != null) {
-            for (int i = glowSize; i > 0; i--) {
-                float t = 1f - (float) i / glowSize;
-                g2.setColor(UiTheme.alpha(glow, (int) (16 * t)));
-                g2.fill(new RoundRectangle2D.Float(-i, -i, w + 2f * i, h + 2f * i,
-                        radius + 2f * i, radius + 2f * i));
-            }
-        }
-
-        if (fillTop != null) {
-            g2.setPaint(new java.awt.GradientPaint(0, 0, fillTop, 0, h, fill));
-        } else {
-            g2.setPaint(fill);
-        }
+        g2.setColor(fill);
         g2.fill(new RoundRectangle2D.Float(0, 0, w, h, radius, radius));
 
-        if (drawBorder && border != null) {
+        if (border != null) {
             g2.setColor(border);
             g2.setStroke(new java.awt.BasicStroke(1f));
             g2.draw(new RoundRectangle2D.Float(0.5f, 0.5f, w - 1f, h - 1f, radius, radius));

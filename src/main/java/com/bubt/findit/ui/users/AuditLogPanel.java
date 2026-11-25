@@ -5,7 +5,7 @@ import com.bubt.findit.core.model.OperationResult;
 import com.bubt.findit.core.model.User;
 import com.bubt.findit.db.dao.AuditEntry;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GlowButton;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.ModernTable;
 import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.UiTheme;
@@ -69,10 +69,10 @@ public class AuditLogPanel extends JPanel {
         title.setForeground(UiTheme.TEXT_MUTE);
         header.add(title, BorderLayout.WEST);
 
-        GlowButton refresh = new GlowButton("Refresh", GlowButton.Kind.PRIMARY);
+        AppButton refresh = new AppButton("Refresh", AppButton.Kind.PRIMARY);
         refresh.addActionListener(event -> reload());
 
-        GlowButton clear = new GlowButton("Clear entries older than 30 days", GlowButton.Kind.GHOST);
+        AppButton clear = new AppButton("Clear entries older than 30 days", AppButton.Kind.SECONDARY);
         clear.setAccent(UiTheme.ROSE);
         clear.addActionListener(event -> clearOldEntries());
 
