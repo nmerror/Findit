@@ -1,4 +1,7 @@
-# FindIt — Segment 1 Skeleton
+# FindIt — Campus Lost & Found Management System
+
+[![Build & Test](https://github.com/nmerror/Findit/actions/workflows/ci.yml/badge.svg?branch=feature/clean-ui)](https://github.com/nmerror/Findit/actions/workflows/ci.yml)
+[![Project page](https://img.shields.io/badge/project%20page-nmerror.github.io%2FFindit-0e7c9b)](https://nmerror.github.io/Findit)
 
 **FindIt – Campus Lost & Found Management System**
 Segment 1: *User Authentication, Role-Based Access Control & Dashboard Management*
@@ -205,13 +208,19 @@ the mistakes the in-memory mode hides.
 ```
 findit/
 ├── pom.xml
+├── .github/workflows/
+│   ├── ci.yml                  ← the automatic build: compile + 43 + 49 tests
+│   └── pages.yml               ← the project page with the screenshots
 ├── sql/
 │   ├── 01_schema.sql          ← database contract for all 4 segments
 │   └── 02_seed_data.sql
 ├── docs/
 │   ├── START_HERE.md           ← your day-by-day plan
+│   ├── PROJECT_DESCRIPTION.md  ← the full description of the project
+│   ├── PRESENTATION_SCRIPT.md  ← who presents which part
 │   ├── SEGMENT1_DESIGN.md      ← how Segment 1 is designed
 │   ├── INTEGRATION_CONTRACT.md ← what your teammates must implement
+│   ├── site/                   ← the project page (GitHub Pages)
 │   └── images/
 └── src/main/java/com/bubt/findit/
     ├── core/                   ← SHARED CODE — everybody may use it
@@ -233,7 +242,31 @@ findit/
 
 ---
 
-## 8. The four rules that keep the team out of merge conflicts
+## 8. The automatic build and the project page
+
+**Every push and every pull request is built and tested by GitHub itself**
+(`.github/workflows/ci.yml`). The build server
+
+1. compiles the 104 source files with JDK 17,
+2. starts a real **MySQL 8** in a container and loads `sql/01_schema.sql` and `sql/02_seed_data.sql`,
+3. runs the **43** unit tests,
+4. runs the **49** database tests against that MySQL server,
+5. starts the application on a virtual screen and takes a screenshot of every screen.
+
+The green tick on the pull request is the proof that the code works — for the teacher and for the
+team.
+
+**The project page** (`.github/workflows/pages.yml`) publishes those screenshots together with the
+description of the project on
+
+> **https://nmerror.github.io/Findit**
+
+To switch it on (once, by the repository owner): *Settings → Pages → Build and deployment →
+Source: **GitHub Actions***.
+
+---
+
+## 9. The four rules that keep the team out of merge conflicts
 
 1. **A segment only writes its own tables.** Segment 1 owns `users` and
    `audit_log`; Segment 2 owns `locations`, `items`, `item_images`; Segment 3
@@ -253,7 +286,7 @@ findit/
 
 ---
 
-## 9. Where to start (full plan in `docs/START_HERE.md`)
+## 10. Where to start (full plan in `docs/START_HERE.md`)
 
 | Step | What you build | Why it is first |
 |---|---|---|

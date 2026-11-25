@@ -1,7 +1,7 @@
 # Segment 1 File Index — what every file does
 
-**90 Java files.** Read this page and you know the whole project without
-opening a single class.
+**104 Java files** (plus the SQL scripts, the workflows and the documentation).
+Read this page and you know the whole project without opening a single class.
 
 > **How to read a file name**
 > `core/spi/ItemCatalogService.java` = *package* `core.spi` (the contracts)
@@ -182,6 +182,23 @@ of them with their own class and nothing else has to change.
 | `src/test/java/.../SelfTest.java` | 43 checks that run without a GUI and without a database |
 | `src/test/java/.../BackendSelfTest.java` | 49 checks against the real MySQL database |
 | `sql/01_schema.sql` | The database schema — the contract between the segments |
+
+---
+
+## The files outside `src/`
+
+| File | What it does |
+|---|---|
+| `.github/workflows/ci.yml` | the automatic build: compile, 43 unit tests, 49 database tests against a MySQL container, screenshots |
+| `.github/workflows/pages.yml` | publishes the project page with the screenshots on GitHub Pages |
+| `docs/site/index.html` | the project page itself — the description, the screens, the database and the OOP mapping |
+| `docs/PROJECT_DESCRIPTION.md` | the complete description of the project — what it is, the problem, the architecture, the database, the tests |
+| `docs/PRESENTATION_SCRIPT.md` | who presents which part, minute by minute, with the demo steps and the expected questions |
+| `docs/UI_SIMPLIFICATION_PLAN.md` | the plan of the flat interface and what was actually done |
+| `sql/01_schema.sql` | the database of the whole project — eight tables, foreign keys, indexes |
+| `sql/02_seed_data.sql` | the demo data, including the two ready-to-use accounts |
+| `run.sh` / `run.bat` | compile and start the application |
+| `setup-java.sh` / `setup-java.bat` | install a private JDK 17 into `.jdk/` if the machine has none |
 
 ---
 

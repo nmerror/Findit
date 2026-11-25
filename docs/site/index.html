@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FindIt — Campus Lost &amp; Found System | BUBT CSE 342</title>
+<meta name="description" content="FindIt is a desktop application for the lost and found office of a campus: authentication, role based access control, reporting, matching, claims and verification — built with Java Swing, JDBC and MySQL.">
+<style>
+  :root {
+    --bg: #f5f7fa;
+    --surface: #ffffff;
+    --surface-2: #f1f4f8;
+    --stroke: #d8dfe8;
+    --stroke-soft: #e8edf3;
+    --text: #16202c;
+    --dim: #4a5768;
+    --mute: #7a8798;
+    --accent: #0e7c9b;
+    --accent-deep: #0a5f77;
+    --mint: #0f9d6e;
+    --amber: #b87a05;
+    --violet: #6d5be0;
+    --rose: #d93f5c;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  header {
+    background: linear-gradient(180deg, #0b2b3a 0%, #0e3d52 100%);
+    color: #fff; padding: 56px 0 48px;
+  }
+  header .eyebrow { color: #7fd4e8; font-size: 13px; letter-spacing: .12em; text-transform: uppercase; font-weight: 600; }
+  header h1 { font-size: 42px; margin: 10px 0 6px; letter-spacing: -0.5px; }
+  header h1 span { color: #7fd4e8; }
+  header p.lead { color: #c8dbe4; font-size: 18px; max-width: 720px; margin: 0 0 22px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+  .badge {
+    display: inline-block; padding: 5px 12px; border-radius: 999px; font-size: 12.5px;
+    background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); color: #e8f4f8;
+  }
+  .badge b { color: #fff; font-weight: 600; }
+  nav.toc { background: var(--surface); border-bottom: 1px solid var(--stroke); }
+  nav.toc .wrap { display: flex; gap: 26px; overflow-x: auto; padding: 13px 24px; }
+  nav.toc a { color: var(--dim); text-decoration: none; font-size: 14px; font-weight: 500; white-space: nowrap; }
+  nav.toc a:hover { color: var(--accent); }
+  section { padding: 52px 0 8px; }
+  h2 { font-size: 26px; margin: 0 0 6px; letter-spacing: -0.3px; }
+  h2 + .sub { color: var(--mute); margin: 0 0 26px; font-size: 15px; }
+  h3 { font-size: 17px; margin: 26px 0 8px; }
+  code, pre { font-family: "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; }
+  pre {
+    background: #0e1b24; color: #d6e6ee; padding: 16px 18px; border-radius: var(--radius);
+    overflow-x: auto; font-size: 13.5px; line-height: 1.7;
+  }
+  pre .c { color: #7f98a8; }
+  pre .k { color: #7fd4e8; }
+  .grid { display: grid; gap: 16px; }
+  .g2 { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+  .card { background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius); padding: 20px 22px; }
+  .card h3 { margin-top: 0; }
+  .card p { color: var(--dim); margin: 6px 0 0; font-size: 14.5px; }
+  table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius); overflow: hidden; font-size: 14.5px; }
+  th { background: var(--surface-2); color: var(--mute); text-align: left; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; padding: 11px 14px; border-bottom: 1px solid var(--stroke-soft); }
+  td { padding: 11px 14px; border-bottom: 1px solid var(--stroke-soft); color: var(--dim); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td:first-child { color: var(--text); font-weight: 500; }
+  .shot { background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius); overflow: hidden; }
+  .shot img { width: 100%; display: block; background: #0b0f14; }
+  .shot .cap { padding: 10px 14px; font-size: 13px; color: var(--mute); border-top: 1px solid var(--stroke-soft); }
+  .shot .cap b { color: var(--text); }
+  .pill { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 600; }
+  .p1 { background: rgba(15,157,110,.14); color: #0b7d57; }
+  .p2 { background: rgba(14,124,155,.14); color: var(--accent-deep); }
+  .p3 { background: rgba(184,122,5,.15); color: #8a5c04; }
+  .p4 { background: rgba(109,91,224,.14); color: #4d3fb0; }
+  .p5 { background: rgba(217,63,92,.13); color: #b32f49; }
+  footer { margin-top: 56px; padding: 28px 0 44px; border-top: 1px solid var(--stroke); color: var(--mute); font-size: 13.5px; }
+  footer a { color: var(--accent); }
+  .team { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+  .member { background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius); padding: 16px 18px; }
+  .member .n { font-weight: 600; }
+  .member .r { color: var(--mute); font-size: 13px; margin-top: 2px; }
+  .member .id { color: var(--mute); font-size: 12px; font-family: ui-monospace, Menlo, monospace; }
+  .arch { background: var(--surface); border: 1px solid var(--stroke); border-radius: var(--radius); padding: 18px; text-align: center; }
+  .arch img { max-width: 100%; }
+  .steps { counter-reset: s; }
+  .step { display: flex; gap: 14px; margin-bottom: 14px; }
+  .step .no { flex: 0 0 26px; height: 26px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .step .tx b { color: var(--text); }
+  .step .tx { color: var(--dim); font-size: 14.5px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="eyebrow">BUBT · Advanced Programming Lab · CSE 342</div>
+    <h1>FindIt <span>— Campus Lost &amp; Found System</span></h1>
+    <p class="lead">
+      A desktop application for the lost and found office of a campus. Students report what they lost
+      or found, the system matches the two sides, the office verifies the claim and the item goes
+      back to its owner.
+    </p>
+    <div class="badges">
+      <span class="badge"><b>Java 17</b></span>
+      <span class="badge"><b>Java Swing</b> (GUI)</span>
+      <span class="badge"><b>MySQL 8</b> via JDBC</span>
+      <span class="badge"><b>PreparedStatement</b> everywhere</span>
+      <span class="badge"><b>43/43</b> unit tests</span>
+      <span class="badge"><b>49/49</b> database tests</span>
+      <span class="badge"><b>106</b> Java files</span>
+    </div>
+  </div>
+</header>
+
+<nav class="toc">
+  <div class="wrap">
+    <a href="#run">Run it</a>
+    <a href="#screens">The screens</a>
+    <a href="#features">What it does</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#database">Database</a>
+    <a href="#oop">OOP concepts</a>
+    <a href="#team">The team</a>
+    <a href="#links">Links</a>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section id="run">
+  <h2>Run it in one minute</h2>
+  <p class="sub">No database server needed for the demo — the application falls back to an in-memory store with the same data model.</p>
+  <div class="grid g2">
+    <div>
+      <h3>On Linux or macOS</h3>
+      <pre><span class="c"># clone the repository</span>
+git clone https://github.com/nmerror/Findit.git
+cd Findit
+
+<span class="c"># only if Java is not installed</span>
+bash setup-java.sh
+
+<span class="c"># compile and start (demo data)</span>
+bash run.sh</pre>
+    </div>
+    <div>
+      <h3>On Windows</h3>
+      <pre>git clone https://github.com/nmerror/Findit.git
+cd Findit
+
+<span class="c">rem only if Java is not installed</span>
+setup-java.bat
+
+<span class="c">rem compile and start (demo data)</span>
+run.bat</pre>
+    </div>
+  </div>
+
+  <h3>Log in</h3>
+  <table>
+    <tr><th>Role</th><th>E-mail</th><th>Password</th><th>What it shows</th></tr>
+    <tr><td>Administrator</td><td><code>admin@findit.edu</code></td><td><code>Admin@1234</code></td><td>everything, including the user list and the audit log</td></tr>
+    <tr><td>Student</td><td><code>ayesha@buet.edu</code></td><td><code>Student@123</code></td><td>own profile, own reports, the search and the dashboard</td></tr>
+  </table>
+
+  <h3>With a real MySQL database</h3>
+  <pre>mysql -u root -p &lt; sql/01_schema.sql
+mysql -u root -p &lt; sql/02_seed_data.sql
+
+<span class="c"># put your credentials in app.properties, then:</span>
+bash run.sh --mysql</pre>
+</div>
+
+<section id="screens">
+  <h2>The screens</h2>
+  <p class="sub">Every screenshot below was taken by the build server — the same code, the same database.</p>
+  <div class="grid g2">
+    <div class="shot">
+      <img src="images/login.png" alt="The login screen of FindIt">
+      <div class="cap"><b>1. Login</b> — one card, the identifier accepts the e-mail or the student ID, the password is hashed with PBKDF2.</div>
+    </div>
+    <div class="shot">
+      <img src="images/dashboard.png" alt="The dashboard of FindIt">
+      <div class="cap"><b>2. Dashboard</b> — four KPI cards, the claim pipeline, the busiest locations and the table of the recent reports.</div>
+    </div>
+    <div class="shot">
+      <img src="images/users.png" alt="The user management screen of FindIt">
+      <div class="cap"><b>3. Data management</b> — administrator only: suspend, restore and change the role of an account.</div>
+    </div>
+    <div class="shot">
+      <img src="images/search.png" alt="The search results of FindIt">
+      <div class="cap"><b>4. Search</b> — one search box over people, items and claims; the other segments join in through the same contract.</div>
+    </div>
+    <div class="shot">
+      <img src="images/profile.png" alt="The profile screen of FindIt">
+      <div class="cap"><b>5. Profile</b> — the account data, the phone number, the password change and the own activity feed.</div>
+    </div>
+    <div class="shot">
+      <img src="images/audit.png" alt="The audit log of FindIt">
+      <div class="cap"><b>6. Audit log</b> — every action of every user, written by the service layer and not by the buttons.</div>
+    </div>
+    <div class="shot">
+      <img src="images/reports.png" alt="The report screen of FindIt">
+      <div class="cap"><b>7. Report</b> — the summary of the whole system, exported as a text file or as CSV.</div>
+    </div>
+    <div class="shot">
+      <img src="images/dashboard-mysql.png" alt="The dashboard of FindIt reading a real MySQL database">
+      <div class="cap"><b>Live MySQL</b> — the same dashboard, reading the real tables instead of the demo data.</div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <h2>What it does</h2>
+  <p class="sub">The five modules of the proposal — who owns them and what they do.</p>
+  <table>
+    <tr><th>Module</th><th>Owner</th><th>What it does</th></tr>
+    <tr><td>User login &amp; authentication</td><td>Segment 1</td>
+        <td>Registration and sign-in, PBKDF2 password hashing, sessions with an expiry, role based access control and the audit trail.</td></tr>
+    <tr><td>Module 1 — item reporting</td><td>Segment 2</td>
+        <td>Report a lost or found item with its category, its campus location and a photo; browse and filter the open reports.</td></tr>
+    <tr><td>Module 2 — matching</td><td>Segment 3</td>
+        <td>Compare the lost and the found reports, score the similarity and propose the pairs that belong together.</td></tr>
+    <tr><td>Module 3 — claims</td><td>Segment 3 &amp; 4</td>
+        <td>Claim an item, let the office verify the claim with the photo evidence and hand the item back to its owner.</td></tr>
+    <tr><td>Search &amp; report</td><td>Segment 1</td>
+        <td>One global search over people, items and claims, plus the report of the whole system as a text file or as CSV.</td></tr>
+  </table>
+</section>
+
+<section id="architecture">
+  <h2>Architecture</h2>
+  <p class="sub">Four segments, one code base — nobody has to touch anybody else's code.</p>
+  <div class="arch">
+    <img src="images/architecture.svg" alt="The architecture of FindIt: the Swing user interface, the service layer, the DAO layer and the MySQL database">
+  </div>
+  <div class="grid g2" style="margin-top:18px">
+    <div class="card">
+      <h3>Contracts, not imports</h3>
+      <p>Segment 1 declares the interfaces in <code>core/spi</code>. Segments 2, 3 and 4 implement them and register them in the <code>ServiceRegistry</code> at run time. Segment 1 never imports a class of another segment.</p>
+    </div>
+    <div class="card">
+      <h3>One owner per table</h3>
+      <p>Segment 1 writes <code>users</code> and <code>audit_log</code>, Segment 2 writes <code>locations</code>, <code>items</code> and <code>item_images</code>, Segment 3 writes <code>matches</code> and <code>claims</code>, Segment 4 only changes the status of a claim.</p>
+    </div>
+    <div class="card">
+      <h3>A real connection pool</h3>
+      <p>Every query used to open its own TCP connection. Now a pool of eight connections is handed out and returned, and several statements can run in one transaction with a commit or a rollback.</p>
+    </div>
+    <div class="card">
+      <h3>Permission in the service layer</h3>
+      <p>The buttons are not the security. Every service checks the permission of the current user again — the interface only hides what the user may not do.</p>
+    </div>
+  </div>
+</section>
+
+<section id="database">
+  <h2>Database</h2>
+  <p class="sub">MySQL 8, eight tables, foreign keys and indexes — created by <code>sql/01_schema.sql</code>.</p>
+  <table>
+    <tr><th>Table</th><th>Purpose</th><th>Written by</th></tr>
+    <tr><td><code>users</code></td><td>The accounts: name, e-mail, student ID, hashed password, role, status</td><td>Segment 1</td></tr>
+    <tr><td><code>audit_log</code></td><td>Every action: who, what, when, details</td><td>Segment 1</td></tr>
+    <tr><td><code>notifications</code></td><td>The alerts of the dashboard</td><td>Segment 1</td></tr>
+    <tr><td><code>locations</code></td><td>The places of the campus where something can be lost</td><td>Segment 2</td></tr>
+    <tr><td><code>items</code></td><td>The lost and the found reports</td><td>Segment 2</td></tr>
+    <tr><td><code>item_images</code></td><td>The photo of a report</td><td>Segment 2</td></tr>
+    <tr><td><code>matches</code></td><td>The pairs that the matching engine proposes</td><td>Segment 3</td></tr>
+    <tr><td><code>claims</code></td><td>The claims of the students and their verification</td><td>Segment 3 &amp; 4</td></tr>
+  </table>
+  <p style="color:var(--dim);font-size:14.5px;margin-top:16px">
+    Every statement is a <code>PreparedStatement</code> with <code>?</code> placeholders — no string is ever
+    glued into a query. The connection, the pool and the transactions live in
+    <code>db/Database.java</code> and <code>db/ConnectionPool.java</code>.
+  </p>
+</section>
+
+<section id="oop">
+  <h2>The Java OOP concepts, where they are</h2>
+  <table>
+    <tr><th>Concept</th><th>Where it is in the code</th></tr>
+    <tr><td>Classes and objects</td><td><code>User</code>, <code>Role</code>, <code>Session</code>, <code>OperationResult</code>, <code>DashboardStats</code> — the whole domain model</td></tr>
+    <tr><td>Encapsulation</td><td>private fields with getters; <code>User.sanitized()</code> never lets the password hash leave the object</td></tr>
+    <tr><td>Inheritance</td><td><code>BaseFrame</code> is the abstract base of every window; <code>LoginFrame</code>, <code>RegisterFrame</code> and <code>MainFrame</code> extend it</td></tr>
+    <tr><td>Polymorphism</td><td>every DAO interface has two implementations — <code>JdbcUserDao</code> for MySQL and <code>InMemoryUserDao</code> for the demo; the application asks for the interface and never for the class</td></tr>
+    <tr><td>Abstraction</td><td>the seven interfaces in <code>core/spi</code>, the abstract <code>BaseFrame</code>, the DAO interfaces in <code>db/dao</code></td></tr>
+    <tr><td>Exception handling</td><td>try/catch in the DAOs, <code>DataAccessException</code> and <code>AccessDeniedException</code>, and <code>OperationResult</code> instead of exceptions across the interface</td></tr>
+    <tr><td>Collections</td><td><code>ArrayList</code>, <code>HashMap</code>, <code>ConcurrentHashMap</code>, <code>CopyOnWriteArrayList</code> and <code>List.of()</code> in the service, registry and event classes</td></tr>
+    <tr><td>Event handling</td><td><code>ActionListener</code> on the buttons, <code>DocumentListener</code> for the live search, <code>FocusListener</code> for the input fields, <code>MouseListener</code> for the links, <code>WindowAdapter</code> for the windows — plus the own <code>EventBus</code> between the segments</td></tr>
+  </table>
+</section>
+
+<section id="team">
+  <h2>The team</h2>
+  <p class="sub">Advanced Programming Lab — CSE 342, semester 55, intake 4.</p>
+  <div class="team">
+    <div class="member"><div class="n">MD. Nurul Azom Arif</div><div class="r">Leader</div><div class="id">20255103126</div></div>
+    <div class="member"><div class="n">Muntasir Al Simum</div><div class="r">Co-Leader</div><div class="id">20255103134</div></div>
+    <div class="member"><div class="n">Rajmohan Chandra Shil</div><div class="r">Co-Leader</div><div class="id">20255103149</div></div>
+    <div class="member"><div class="n">Sadikul Basar</div><div class="r">Co-Leader — Segment 1</div><div class="id">20255103159</div></div>
+  </div>
+</section>
+
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>
+      FindIt — Campus Lost &amp; Found Management System · BUBT, Department of Computer Science and Engineering ·
+      Advanced Programming Lab (CSE 342).
+    </p>
+    <p>
+      <a href="https://github.com/nmerror/Findit">github.com/nmerror/Findit</a> ·
+      <a href="https://github.com/nmerror/Findit/pull/4">PR #4 — the backend</a> ·
+      <a href="https://github.com/nmerror/Findit/pull/5">PR #5 — the interface</a>
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
