@@ -27,10 +27,7 @@ public final class Main {
 
     public static void main(String[] args) {
         AppConfig config = resolveConfig(args);
-        com.bubt.findit.ui.common.UiTheme.setMode(
-                "light".equalsIgnoreCase(config.theme())
-                        ? com.bubt.findit.ui.common.UiTheme.Mode.LIGHT
-                        : com.bubt.findit.ui.common.UiTheme.Mode.DARK);
+        com.bubt.findit.ui.common.UiTheme.apply();
         Database.initialize(config);
         DaoFactory.reset();
 

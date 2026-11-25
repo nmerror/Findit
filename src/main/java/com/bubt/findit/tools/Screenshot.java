@@ -49,17 +49,7 @@ public final class Screenshot {
         String mode = args.length > 0 ? args[0] : "login";
         Path output = Path.of(args.length > 1 ? args[1] : "findit-screenshot.png");
 
-        // "light:dashboard" takes the screenshot in the light palette.
-        final String screen;
-        if (mode.startsWith("light:")) {
-            screen = mode.substring("light:".length());
-            com.bubt.findit.ui.common.UiTheme.setMode(
-                    com.bubt.findit.ui.common.UiTheme.Mode.LIGHT);
-        } else {
-            screen = mode;
-            com.bubt.findit.ui.common.UiTheme.setMode(
-                    com.bubt.findit.ui.common.UiTheme.Mode.DARK);
-        }
+        final String screen = mode;
         com.bubt.findit.ui.common.UiTheme.apply();
 
         boolean useMysql = args.length > 2 && "--mysql".equals(args[2]);
@@ -86,7 +76,7 @@ public final class Screenshot {
                         frame.navigateTo(screen);
                     }
                 }
-                case "dashboard", "profile", "segment2", "search" -> {
+                case "dashboard", "profile", "search" -> {
                     services.authService().register("Ayesha Rahman", "ayesha@buet.edu", "21-04234",
                             "Passw0rd1", "Passw0rd1");
                     services.authService().login("ayesha@buet.edu", "Passw0rd1");
@@ -95,7 +85,7 @@ public final class Screenshot {
                     if ("search".equals(screen)) {
                         frame.setSearchQuery("Ayesha");
                     } else if (!"dashboard".equals(screen)) {
-                        frame.navigateTo("segment2".equals(screen) ? "s2-report" : screen);
+                        frame.navigateTo(screen);
                     }
                 }
                 default -> new LoginFrame(services).setVisible(true);
