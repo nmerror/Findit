@@ -52,6 +52,14 @@ public class StackedBar extends JComponent {
         return slices.stream().mapToInt(Slice::value).sum();
     }
 
+    /** "1 claim" instead of "1 claims". */
+    private String singular(String label) {
+        if (label.endsWith("s")) {
+            return label.substring(0, label.length() - 1);
+        }
+        return label;
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
@@ -111,7 +119,8 @@ public class StackedBar extends JComponent {
         if (total > 0) {
             g2.setColor(UiTheme.TEXT_MUTE);
             g2.setFont(Fonts.caption(11));
-            g2.drawString(total + " " + totalLabel, 0, legendTop + 2 * rowHeight + 6);
+            g2.drawString(total + " " + (total == 1 ? singular(totalLabel) : totalLabel),
+                    0, legendTop + 2 * rowHeight + 6);
         }
         g2.dispose();
     }
