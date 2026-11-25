@@ -132,38 +132,35 @@ of them with their own class and nothing else has to change.
 
 ## 4. `ui/` — the screens (31 files)
 
-### `ui/common/` — the design system (22 files) — **your teammates should use these**
+### `ui/common/` — the design system (19 files) — **your teammates should use these**
 | File | Purpose |
 |---|---|
-| `UiTheme.java` | Every colour, radius and spacing value — plus the **dark/light palettes** |
-| `Fonts.java` | Picks the best installed modern typeface, falls back safely |
-| `BaseFrame.java` | **Abstract** base class of every window: custom title bar, theme switch, drag |
-| `ThemeToggle.java` | The sun / moon button that switches the two modes |
-| `RoundedPanel.java` | Card primitive: rounded corners, gradient, hairline border, glow |
-| `GlowButton.java` | Primary / ghost / danger buttons with a hover glow |
-| `ModernTextField.java` | Rounded input with a luminous focus ring and placeholder |
+| `UiTheme.java` | Every colour, radius and spacing value + the look-and-feel of the standard widgets |
+| `Fonts.java` | Uses the system interface font, falls back to the Java logical font |
+| `BaseFrame.java` | **Abstract** base class of every window: title, size, content panel |
+| `RoundedPanel.java` | Card primitive: rounded corners, flat fill, hairline border |
+| `AppButton.java` | Primary / secondary / danger / quiet buttons with a hover state |
+| `ModernTextField.java` | Flat input with a thin border, accent focus border and placeholder |
 | `ModernPasswordField.java` | The password twin |
 | `FieldSkin.java` | The painting code shared by the two input fields |
 | `NavButton.java` | Sidebar item with a vector glyph and an active accent bar |
 | `TopBar.java` | Page header: title, live clock, **global search box**, user |
 | `StatCard.java` | KPI card: caption, big number, glyph badge |
-| `DonutChart.java` | The claim-pipeline ring, drawn with Graphics2D |
+| `StackedBar.java` | The claim-pipeline bar with its legend, drawn with Graphics2D |
 | `BarList.java` | The "busiest locations" bars |
 | `StatusBadge.java` | A coloured status pill |
 | `StatusTableRenderer.java` | Puts the pill inside a table cell |
-| `ModernTable.java` | Dark tables: no grid lines, striped rows, styled header |
+| `ModernTable.java` | Light tables: soft stripes, styled header, fixed column widths |
 | `Icons.java` | 16 vector glyphs drawn in code — the project ships no images |
-| `GradientBackdrop.java` | The glowing gradient behind the login screen |
 | `StretchPanel.java` | Makes a panel fill the width of a scroll pane |
-| `PlaceholderPanel.java` | The styled slot where the other segments put their screens |
 
 ### The screens (9 files)
 | File | Screen |
 |---|---|
 | `ui/MainFrame.java` | The window: role-based sidebar + header + all the screens |
-| `ui/auth/LoginFrame.java` | Screen 1 — login (hero + glass card) |
+| `ui/auth/LoginFrame.java` | Screen 1 — login (one centred card) |
 | `ui/auth/RegisterFrame.java` | Screen 1 — registration |
-| `ui/dashboard/DashboardPanel.java` | Screen 2 — KPI cards, donut, bars, live table |
+| `ui/dashboard/DashboardPanel.java` | Screen 2 — KPI cards, claim pipeline, bars, live table |
 | `ui/users/UserManagementPanel.java` | Screen 3 — data management (admin only) |
 | `ui/users/ProfilePanel.java` | My profile + password change + activity feed |
 | `ui/users/AuditLogPanel.java` | Additional screen — the audit trail |

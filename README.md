@@ -81,8 +81,8 @@ java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
 
 | Screen | File | What it shows |
 |---|---|---|
-| Login / Registration | `ui/auth/LoginFrame.java` | branded hero + glass sign-in card, focus rings, validation |
-| Dashboard / Main Menu | `ui/dashboard/DashboardPanel.java` | 4 KPI cards, claim-pipeline donut, location bars, live table |
+| Login / Registration | `ui/auth/LoginFrame.java` | one centred sign-in card, inline validation |
+| Dashboard / Main Menu | `ui/dashboard/DashboardPanel.java` | 4 KPI cards, claim-pipeline bar, location bars, live table |
 | Data Management | `ui/users/UserManagementPanel.java` | admin-only: suspend / restore / change role |
 | Search / Report | `ui/search/SearchResultsPanel.java`, `ui/reports/ReportPanel.java` | global search + text/CSV export |
 | Additional | `ui/users/AuditLogPanel.java`, `ui/users/ProfilePanel.java` | audit trail, profile + activity feed |
@@ -91,41 +91,41 @@ java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
 > committed here because the GitHub API used for this upload is text-only.
 > Regenerate any of them with:
 > `java -cp target/classes com.bubt.findit.tools.Screenshot dashboard out.png`
-> (prefix the screen with `light:` for the light palette).
 
 ---
 
-## 3. Two modes: dark and light
+## 3. The interface — one light theme, flat and plain
 
-The sun / moon button in the window title bar switches the whole application
-between the **dark** palette and the **light** palette — instantly, without a
-restart. The chosen mode is saved in `app.properties` (`app.theme = dark`).
+The application uses **one** light theme and **flat** surfaces: no gradients,
+no glows, no dark mode, no custom title bar. The window keeps the decorations
+of the operating system, so it behaves like every other program on the
+machine.
 
-Both palettes live in `ui/common/UiTheme.java`; the screen is rebuilt around
-the new palette, so nothing is left in the old colours.
+The look-and-feel is **Nimbus** (part of every JDK) and the colours of the
+standard Swing widgets are set in `ui/common/UiTheme.java`, so tables, scroll
+bars and text fields look native.
 
 ---
 
 ## 4. The interface — a small design system
 
-The GUI is **100% custom-painted Swing**: no default look-and-feel widgets are
-visible anywhere, so the project looks the same on every machine.
+The cards, buttons, inputs and charts are painted by hand, so the project
+looks the same on every machine.
 
 | Component | What it gives you |
 |---|---|
-| `UiTheme` | Every colour, radius and font in one file (deep-space navy + cyan/violet accents) |
-| `Fonts` | Picks the best installed modern typeface, falls back safely |
-| `BaseFrame` | Undecorated window with a custom title bar, app mark and window buttons |
-| `RoundedPanel` | Cards with rounded corners, gradient fill, hairline border and soft glow |
-| `GlowButton` | Primary / ghost / danger buttons with gradient and hover glow |
-| `ModernTextField` | Rounded dark input with a luminous focus ring and placeholder |
+| `UiTheme` | Every colour, radius and font in one file (white surfaces + teal/violet accents) |
+| `Fonts` | Uses the system interface font, falls back to the Java logical font |
+| `BaseFrame` | Base class of every window: title, size and the panel for the content |
+| `RoundedPanel` | Cards with rounded corners, flat fill and a hairline border |
+| `AppButton` | Primary / secondary / danger / quiet buttons with a hover state |
+| `ModernTextField` | Flat input with a thin border, an accent focus border and a placeholder |
 | `NavButton` | Sidebar item with vector glyph and an accent bar when active |
 | `StatCard` | KPI card — caption, big number, glyph badge |
-| `DonutChart` / `BarList` | Charts drawn with Graphics2D (no charting library) |
+| `StackedBar` / `BarList` | Charts drawn with Graphics2D (no charting library) |
 | `StatusBadge` / `StatusTableRenderer` | Coloured status pills, also inside tables |
 | `Icons` | 14 vector glyphs drawn in code — the project ships **no image files** |
-| `ModernTable` | Dark tables: no grid lines, striped rows, styled header |
-| `GradientBackdrop` | The glowing gradient behind the login screen |
+| `ModernTable` | Light tables: soft stripes, styled header, fixed column widths |
 | `StretchPanel` | Makes content fill the width of a scroll pane (no stray scrollbars) |
 
 Your teammates should build their screens with **these** components instead of
