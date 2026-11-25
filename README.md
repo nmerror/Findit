@@ -264,6 +264,11 @@ description of the project on
 To switch it on (once, by the repository owner): *Settings → Pages → Build and deployment →
 Source: **GitHub Actions***.
 
+> The two workflow files are in this repository as a reference copy under
+> [`docs/workflows/`](docs/workflows/ACTIVATION.md) — the GitHub connection that pushed
+> this repository is not allowed to write into `.github/workflows/`. The activation guide
+> shows how to copy them there in two minutes.
+
 ---
 
 ## 9. The four rules that keep the team out of merge conflicts
