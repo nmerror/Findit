@@ -1,6 +1,6 @@
 # Segment 1 File Index — what every file does
 
-**104 Java files** (plus the SQL scripts, the workflows and the documentation).
+**119 Java files** (plus the SQL scripts, the workflows and the documentation).
 Read this page and you know the whole project without opening a single class.
 
 > **How to read a file name**
@@ -17,14 +17,14 @@ Read this page and you know the whole project without opening a single class.
 | Package | Who may use it | What lives in it |
 |---|---|---|
 | `core` | **everybody** | shared nouns, the contracts, the event bus |
-| `db` | Segment 1 | JDBC access to `users` and `audit_log` |
+| `db` | Segment 1 | JDBC access to `users`, `password_resets` and `audit_log` |
 | `service` | Segment 1 | business rules (no Swing code) |
 | `ui` | Segment 1 | the Swing screens |
 | `app`, `config`, `tools` | Segment 1 | wiring, settings, helper programs |
 
 ---
 
-## 1. `core/` — the shared foundation (32 files)
+## 1. `core/` — the shared foundation (33 files)
 
 ### `core/model/` — the shared nouns (13 files)
 | File | One-line purpose |
@@ -37,10 +37,10 @@ Read this page and you know the whole project without opening a single class.
 | `OperationResult.java` | Success/failure + message + data (no exceptions in the UI) |
 | `DashboardStats.java` | All the counters the dashboard shows |
 | `SearchHit.java` | One row of the global search result |
-| `ItemSummary.java` | Lightweight item view (Segment 2's data without their classes) |
+| `ItemSummary.java` | Lightweight item view — now also carries the photo path and the id of the poster |
 | `LocationCount.java` | "Library — 12 items" |
 | `ItemType.java` | `LOST` / `FOUND` |
-| `ItemCategory.java` | Electronics, Documents, Accessories, … |
+| `ItemCategory.java` | Electronics, Documents & Cards, Accessories, Clothing, Keys & Cards, Books & Stationery, Other |
 | `Notification.java` | One in-app notification |
 
 ### `core/spi/` — **the contracts your teammates implement** (7 files)
@@ -66,7 +66,7 @@ replaced by one line at start-up.
 | `EventBus.java` | The bus: `subscribe()` / `publish()`; a failing listener never breaks the publisher |
 | `AppEvent.java` | The event: name + actor + payload |
 | `EventListener.java` | The callback interface |
-| `Events.java` | The event names (`USER_REGISTERED`, `USER_LOGIN_SUCCESS`, …) |
+| `Events.java` | The event names (`USER_REGISTERED`, `USER_LOGIN_SUCCESS`, `USER_DELETED`, …) |
 
 ### The rest of `core/` (4 files)
 | File | Purpose |
@@ -78,14 +78,14 @@ replaced by one line at start-up.
 
 ---
 
-## 2. `db/` — the database layer (10 files)
+## 2. `db/` — the database layer (27 files)
 
 | File | Purpose |
 |---|---|
 | `Database.java` | Owns the pool, hands out connections, runs transactions |
 | `ConnectionPool.java` | The pool: a connection is *returned* instead of closed |
 | `DaoFactory.java` | Chooses the JDBC DAO or the in-memory DAO |
-| `dao/UserDao.java` | Interface: read/insert/update/delete the `users` table |
+| `dao/UserDao.java` | Interface: read/insert/update/delete the `users` table; `findByRole()` for the role-aware lists |
 | `dao/JdbcUserDao.java` | The MySQL implementation (PreparedStatement everywhere) |
 | `dao/InMemoryUserDao.java` | The in-memory implementation (no server needed) |
 | `dao/AuditDao.java` | Interface: read/insert/delete the `audit_log` table |
@@ -94,22 +94,25 @@ replaced by one line at start-up.
 | `dao/AuditEntry.java` | One row of the audit log |
 | `dao/NotificationDao.java` | Interface: the in-app notifications |
 | `dao/JdbcNotificationDao.java` + `InMemoryNotificationDao.java` | The two implementations |
-| `dao/ItemDao.java` + `dao/JdbcItemDao.java` | Segment 2's items and locations |
+| `dao/ItemDao.java` + `dao/JdbcItemDao.java` | The items, their photos and the locations |
+| `dao/InMemoryItemDao.java` | The in-memory twin of the item DAO |
 | `dao/ClaimDao.java` + `dao/JdbcClaimDao.java` | Segment 3's claims |
 | `dao/MatchDao.java` + `dao/JdbcMatchDao.java` | Segment 3's matches |
+| `dao/PasswordResetDao.java` + `JdbcPasswordResetDao.java` + `InMemoryPasswordResetDao.java` | The 6-digit PIN codes of the reset |
 | `dao/ItemRecord.java`, `ClaimRecord.java`, `MatchRecord.java` | The write-side rows |
 | `dao/DataAccessException.java` | Wraps `SQLException` so the service layer stays clean |
 
 ---
 
-## 3. `service/` — the business rules (9 files)
+## 3. `service/` — the business rules (15 files)
 
 | File | Purpose |
 |---|---|
-| `AuthService.java` | Register, log in, log out, change password |
+| `AuthService.java` | Register, log in, log out, change password, **request a reset PIN**, **reset with the PIN** |
+| `PostService.java` | **The three rules of the lost-and-found flow** — post with a photo, confirm found, admin removes |
 | `SessionManager.java` | Creates, validates, expires and destroys sessions |
 | `RbacService.java` | `can()` / `require()` / `permissionsOf()` — the permission gate |
-| `UserService.java` | Profile, suspend, restore, change role, clear old audit entries |
+| `UserService.java` | Profile, suspend, restore, change role, **delete an account**, **the visible accounts** |
 | `DashboardService.java` | Builds the dashboard counters — **the only place that talks to the other segments** |
 | `SearchService.java` | The global search (users + every registered contributor) |
 | `ReportService.java` | Builds the text/CSV report and exports it |
@@ -130,9 +133,9 @@ of them with their own class and nothing else has to change.
 
 ---
 
-## 4. `ui/` — the screens (31 files)
+## 4. `ui/` — the screens (39 files)
 
-### `ui/common/` — the design system (19 files) — **your teammates should use these**
+### `ui/common/` — the design system (22 files) — **your teammates should use these**
 | File | Purpose |
 |---|---|
 | `UiTheme.java` | Every colour, radius and spacing value + the look-and-feel of the standard widgets |
@@ -143,6 +146,9 @@ of them with their own class and nothing else has to change.
 | `ModernTextField.java` | Flat input with a thin border, accent focus border and placeholder |
 | `ModernPasswordField.java` | The password twin |
 | `FieldSkin.java` | The painting code shared by the two input fields |
+| `FlatComboBox.java` | Flat drop-down with a chevron — the category and the place |
+| `PhotoRenderer.java` | Draws the thumbnail of a lost item inside a table cell (cached) |
+| `EmptyState.java` | The friendly "nothing here yet" message of an empty table |
 | `NavButton.java` | Sidebar item with a vector glyph and an active accent bar |
 | `TopBar.java` | Page header: title, live clock, **global search box**, user |
 | `StatCard.java` | KPI card: caption, big number, glyph badge |
@@ -152,16 +158,33 @@ of them with their own class and nothing else has to change.
 | `StatusTableRenderer.java` | Puts the pill inside a table cell |
 | `ModernTable.java` | Light tables: soft stripes, styled header, fixed column widths |
 | `Icons.java` | 16 vector glyphs drawn in code — the project ships no images |
+| `AvatarLabel.java` | The round initials badge in the header |
 | `StretchPanel.java` | Makes a panel fill the width of a scroll pane |
 
-### The screens (9 files)
+### `ui/auth/` — the entry screens, black / white / grey (7 files)
+| File | Screen |
+|---|---|
+| `AuthColors.java` | The black, white and grey palette of the three entry screens |
+| `AuthTextField.java` | Dark input with a placeholder |
+| `AuthPasswordField.java` | Dark password input |
+| `AuthButton.java` | White / grey / outline button for the dark screens |
+| `LoginFrame.java` | Screen 1 — sign in (one dark card, links to register and reset) |
+| `RegisterFrame.java` | Screen 1 — create an account (normal e-mail, optional student ID) |
+| `ForgotPasswordFrame.java` | Screen 1 — forgot the password: e-mail → 6-digit PIN → new password |
+
+### `ui/posts/` — the lost-and-found screens (3 files)
+| File | Screen |
+|---|---|
+| `PostLostItemPanel.java` | Post a lost item: category drop-down, place, description, **photo** |
+| `MyPostsPanel.java` | The posts of the signed-in student + the **Confirm found** button |
+| `PostManagementPanel.java` | Admin only: every post of the campus + **Remove the post** |
+
+### The other screens (7 files)
 | File | Screen |
 |---|---|
 | `ui/MainFrame.java` | The window: role-based sidebar + header + all the screens |
-| `ui/auth/LoginFrame.java` | Screen 1 — login (one centred card) |
-| `ui/auth/RegisterFrame.java` | Screen 1 — registration |
-| `ui/dashboard/DashboardPanel.java` | Screen 2 — KPI cards, claim pipeline, bars, live table |
-| `ui/users/UserManagementPanel.java` | Screen 3 — data management (admin only) |
+| `ui/dashboard/DashboardPanel.java` | Screen 2 — KPI cards, recent lost posts with thumbnails, the accounts |
+| `ui/users/UserManagementPanel.java` | Screen 3 — data management (admin only) + **Delete account** |
 | `ui/users/ProfilePanel.java` | My profile + password change + activity feed |
 | `ui/users/AuditLogPanel.java` | Additional screen — the audit trail |
 | `ui/search/SearchResultsPanel.java` | Screen 4 — global search results |
@@ -169,19 +192,22 @@ of them with their own class and nothing else has to change.
 
 ---
 
-## 5. The rest (8 files)
+## 5. The rest (9 files)
 
 | File | Purpose |
 |---|---|
-| `Main.java` | Entry point: reads the config, starts the app (`--memory`, `--demo`) |
+| `Main.java` | Entry point: reads the config, starts the app (`--memory`, `--mysql`) |
 | `app/AppServices.java` | Builds every service once and hands them to the screens |
 | `config/AppConfig.java` | Reads `app.properties` (database, theme, session timeout) |
 | `tools/HashTool.java` | Prints a password hash + salt (for seeding the database) |
 | `tools/Screenshot.java` | Takes a screenshot of any screen — for the report and the slides |
-| `tools/DemoSegmentData.java` | Fake Segment 2/3/4 data so the dashboard can be presented early |
 | `src/test/java/.../SelfTest.java` | 43 checks that run without a GUI and without a database |
-| `src/test/java/.../BackendSelfTest.java` | 49 checks against the real MySQL database |
-| `sql/01_schema.sql` | The database schema — the contract between the segments |
+| `src/test/java/.../BackendSelfTest.java` | 67 checks against the real MySQL database |
+| `sql/01_schema.sql` | The database schema — the contract between the segments (9 tables) |
+| `sql/02_seed_data.sql` | 3 accounts + the 6 campus locations — **no fake lost items** |
+
+> The demo data generator (`tools/DemoSegmentData.java`) has been **deleted** —
+> FindIt is a real system, the board starts empty.
 
 ---
 
@@ -189,14 +215,14 @@ of them with their own class and nothing else has to change.
 
 | File | What it does |
 |---|---|
-| `.github/workflows/ci.yml` | the automatic build: compile, 43 unit tests, 49 database tests against a MySQL container, screenshots |
+| `.github/workflows/ci.yml` | the automatic build: compile, 43 unit tests, 67 database tests against a MySQL container, screenshots |
 | `.github/workflows/pages.yml` | publishes the project page with the screenshots on GitHub Pages |
 | `docs/site/index.html` | the project page itself — the description, the screens, the database and the OOP mapping |
 | `docs/PROJECT_DESCRIPTION.md` | the complete description of the project — what it is, the problem, the architecture, the database, the tests |
 | `docs/PRESENTATION_SCRIPT.md` | who presents which part, minute by minute, with the demo steps and the expected questions |
 | `docs/UI_SIMPLIFICATION_PLAN.md` | the plan of the flat interface and what was actually done |
-| `sql/01_schema.sql` | the database of the whole project — eight tables, foreign keys, indexes |
-| `sql/02_seed_data.sql` | the demo data, including the two ready-to-use accounts |
+| `sql/01_schema.sql` | the database of the whole project — nine tables, foreign keys, indexes |
+| `sql/02_seed_data.sql` | the three ready-to-use accounts and the six places of the campus |
 | `run.sh` / `run.bat` | compile and start the application |
 | `setup-java.sh` / `setup-java.bat` | install a private JDK 17 into `.jdk/` if the machine has none |
 

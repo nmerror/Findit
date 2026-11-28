@@ -113,8 +113,8 @@
       <span class="badge"><b>MySQL 8</b> via JDBC</span>
       <span class="badge"><b>PreparedStatement</b> everywhere</span>
       <span class="badge"><b>43/43</b> unit tests</span>
-      <span class="badge"><b>49/49</b> database tests</span>
-      <span class="badge"><b>106</b> Java files</span>
+      <span class="badge"><b>67/67</b> database tests</span>
+      <span class="badge"><b>119</b> Java files</span>
     </div>
   </div>
 </header>
@@ -124,6 +124,7 @@
     <a href="#run">Run it</a>
     <a href="#screens">The screens</a>
     <a href="#features">What it does</a>
+    <a href="#flow">The flow</a>
     <a href="#architecture">Architecture</a>
     <a href="#database">Database</a>
     <a href="#oop">OOP concepts</a>
@@ -136,7 +137,7 @@
 
 <section id="run">
   <h2>Run it in one minute</h2>
-  <p class="sub">No database server needed for the demo — the application falls back to an in-memory store with the same data model.</p>
+  <p class="sub">No database server needed for the first look — the application falls back to an in-memory store with the same data model and the same code path.</p>
   <div class="grid g2">
     <div>
       <h3>On Linux or macOS</h3>
@@ -147,7 +148,7 @@ cd Findit
 <span class="c"># only if Java is not installed</span>
 bash setup-java.sh
 
-<span class="c"># compile and start (demo data)</span>
+<span class="c"># compile and start</span>
 bash run.sh</pre>
     </div>
     <div>
@@ -158,7 +159,7 @@ cd Findit
 <span class="c">rem only if Java is not installed</span>
 setup-java.bat
 
-<span class="c">rem compile and start (demo data)</span>
+<span class="c">rem compile and start</span>
 run.bat</pre>
     </div>
   </div>
@@ -166,9 +167,12 @@ run.bat</pre>
   <h3>Log in</h3>
   <table>
     <tr><th>Role</th><th>E-mail</th><th>Password</th><th>What it shows</th></tr>
-    <tr><td>Administrator</td><td><code>admin@findit.edu</code></td><td><code>Admin@1234</code></td><td>everything, including the user list and the audit log</td></tr>
-    <tr><td>Student</td><td><code>ayesha@buet.edu</code></td><td><code>Student@123</code></td><td>own profile, own reports, the search and the dashboard</td></tr>
+    <tr><td>Administrator</td><td><code>admin@findit.edu</code></td><td><code>Admin@1234</code></td><td>everything, including the account list, the post list and the audit log</td></tr>
+    <tr><td>Student</td><td><code>ayesha@buet.edu</code></td><td><code>Student@123</code></td><td>own profile, own posts, the search and the dashboard</td></tr>
+    <tr><td>Student</td><td><code>tanvir@buet.edu</code></td><td><code>Student@123</code></td><td>the same</td></tr>
   </table>
+  <p class="sub" style="margin-top:14px">You can also <b>create your own account</b> in two seconds — a name, an ordinary e-mail address
+  (<code>user234@gmail.com</code>) and a password. The student ID is optional: leave it empty and the system generates one.</p>
 
   <h3>With a real MySQL database</h3>
   <pre>mysql -u root -p &lt; sql/01_schema.sql
@@ -181,38 +185,63 @@ bash run.sh --mysql</pre>
 <section id="screens">
   <h2>The screens</h2>
   <p class="sub">Every screenshot below was taken by the build server — the same code, the same database.</p>
+  <h3>The entry screens — black, white and grey</h3>
   <div class="grid g2">
     <div class="shot">
       <img src="images/login.png" alt="The login screen of FindIt">
-      <div class="cap"><b>1. Login</b> — one card, the identifier accepts the e-mail or the student ID, the password is hashed with PBKDF2.</div>
+      <div class="cap"><b>1. Sign in</b> — one dark card. The identifier accepts the e-mail or the student ID; the password is hashed with PBKDF2.</div>
     </div>
     <div class="shot">
-      <img src="images/dashboard.png" alt="The dashboard of FindIt">
-      <div class="cap"><b>2. Dashboard</b> — four KPI cards, the claim pipeline, the busiest locations and the table of the recent reports.</div>
+      <img src="images/register.png" alt="The registration screen of FindIt">
+      <div class="cap"><b>2. Create an account</b> — a normal e-mail address is enough; the student ID is optional and generated when you leave it empty.</div>
     </div>
     <div class="shot">
-      <img src="images/users.png" alt="The user management screen of FindIt">
-      <div class="cap"><b>3. Data management</b> — administrator only: suspend, restore and change the role of an account.</div>
+      <img src="images/reset.png" alt="The forgot password screen of FindIt">
+      <div class="cap"><b>3. Forgot the password</b> — step one of the reset: the e-mail address. The system then sends a 6-digit PIN.</div>
+    </div>
+  </div>
+
+  <h3>The application — one flat, light theme</h3>
+  <div class="grid g2">
+    <div class="shot">
+      <img src="images/dashboard.png" alt="The dashboard of FindIt with no lost items yet">
+      <div class="cap"><b>4. Dashboard, before the first post</b> — the counters honestly show zero and the board says so. <b>FindIt has no fake data</b> — every row comes from a real query.</div>
+    </div>
+    <div class="shot">
+      <img src="images/post.png" alt="The form where a student posts a lost item">
+      <div class="cap"><b>5. Post a lost item</b> — the category drop-down (electronic, documents, accessories, clothing, keys, books, other), the place on campus, a description and a photo.</div>
+    </div>
+    <div class="shot">
+      <img src="images/dashboard-live.png" alt="The dashboard of FindIt with two real lost items">
+      <div class="cap"><b>6. The board with real posts</b> — two items posted through the application, each with the photo the owner attached.</div>
+    </div>
+    <div class="shot">
+      <img src="images/my-posts.png" alt="My Posts screen with the Confirm found button">
+      <div class="cap"><b>7. My Posts</b> — the owner clicks <b>Confirm found</b> and the post disappears from the board for good.</div>
+    </div>
+    <div class="shot">
+      <img src="images/users.png" alt="The manage accounts screen of FindIt">
+      <div class="cap"><b>8. Manage accounts</b> — administrator only: suspend, restore, change the role and <b>delete an account</b>. A student never sees this panel.</div>
+    </div>
+    <div class="shot">
+      <img src="images/posts.png" alt="The manage posts screen of FindIt">
+      <div class="cap"><b>9. Manage posts</b> — administrator only: every post of the campus and the button to remove one.</div>
     </div>
     <div class="shot">
       <img src="images/search.png" alt="The search results of FindIt">
-      <div class="cap"><b>4. Search</b> — one search box over people, items and claims; the other segments join in through the same contract.</div>
+      <div class="cap"><b>10. Search</b> — one search box over people, items and claims; the other segments join in through the same contract.</div>
     </div>
     <div class="shot">
       <img src="images/profile.png" alt="The profile screen of FindIt">
-      <div class="cap"><b>5. Profile</b> — the account data, the phone number, the password change and the own activity feed.</div>
+      <div class="cap"><b>11. Profile</b> — the account data, the phone number, the password change and the own activity feed.</div>
     </div>
     <div class="shot">
       <img src="images/audit.png" alt="The audit log of FindIt">
-      <div class="cap"><b>6. Audit log</b> — every action of every user, written by the service layer and not by the buttons.</div>
+      <div class="cap"><b>12. Audit log</b> — every action of every user, written by the service layer and not by the buttons.</div>
     </div>
     <div class="shot">
       <img src="images/reports.png" alt="The report screen of FindIt">
-      <div class="cap"><b>7. Report</b> — the summary of the whole system, exported as a text file or as CSV.</div>
-    </div>
-    <div class="shot">
-      <img src="images/dashboard-mysql.png" alt="The dashboard of FindIt reading a real MySQL database">
-      <div class="cap"><b>Live MySQL</b> — the same dashboard, reading the real tables instead of the demo data.</div>
+      <div class="cap"><b>13. Report</b> — the summary of the whole system, exported as a text file or as CSV.</div>
     </div>
   </div>
 </section>
@@ -224,6 +253,10 @@ bash run.sh --mysql</pre>
     <tr><th>Module</th><th>Owner</th><th>What it does</th></tr>
     <tr><td>User login &amp; authentication</td><td>Segment 1</td>
         <td>Registration and sign-in, PBKDF2 password hashing, sessions with an expiry, role based access control and the audit trail.</td></tr>
+    <tr><td>Password reset by PIN</td><td>Segment 1</td>
+        <td>A 6-digit code with a 10-minute expiry, stored in <code>password_resets</code>, accepted only once — a wrong, used or expired code is refused.</td></tr>
+    <tr><td>The lost-and-found flow</td><td>Segment 1</td>
+        <td>Post a lost item with a category and a photo, close it with <b>Confirm found</b>, remove it as the office — the three rules live in <code>PostService</code>.</td></tr>
     <tr><td>Module 1 — item reporting</td><td>Segment 2</td>
         <td>Report a lost or found item with its category, its campus location and a photo; browse and filter the open reports.</td></tr>
     <tr><td>Module 2 — matching</td><td>Segment 3</td>
@@ -233,6 +266,33 @@ bash run.sh --mysql</pre>
     <tr><td>Search &amp; report</td><td>Segment 1</td>
         <td>One global search over people, items and claims, plus the report of the whole system as a text file or as CSV.</td></tr>
   </table>
+</section>
+
+<section id="flow">
+  <h2>The lost-and-found flow</h2>
+  <p class="sub">Three rules, and they live in one small file — <code>service/PostService.java</code>.</p>
+  <div class="grid g2">
+    <div class="card">
+      <h3>1 · A student posts a lost item</h3>
+      <p>Title, category, brand, colour, the place on campus, a description and <b>a photo</b>. The picture is copied into
+      <code>uploads/</code> and its path is stored in <code>item_images</code>; the board shows it as a small thumbnail.</p>
+    </div>
+    <div class="card">
+      <h3>2 · The owner clicks "Confirm found"</h3>
+      <p>The post gets the status <code>CLOSED</code> and disappears from the open board. The row stays in the database
+      for the audit trail — the history is never lost.</p>
+    </div>
+    <div class="card">
+      <h3>3 · The office removes a post</h3>
+      <p>At any time the administrator can remove a post that is no longer needed — a real <code>DELETE</code>, written into
+      the audit log with the name of the post.</p>
+    </div>
+    <div class="card">
+      <h3>No fake data anywhere</h3>
+      <p>The demo data generator was deleted on purpose. The seed file loads three accounts and the six places of the campus —
+      <b>and not a single lost item</b>. The board starts empty, exactly like on a fresh installation.</p>
+    </div>
+  </div>
 </section>
 
 <section id="architecture">
@@ -248,7 +308,7 @@ bash run.sh --mysql</pre>
     </div>
     <div class="card">
       <h3>One owner per table</h3>
-      <p>Segment 1 writes <code>users</code> and <code>audit_log</code>, Segment 2 writes <code>locations</code>, <code>items</code> and <code>item_images</code>, Segment 3 writes <code>matches</code> and <code>claims</code>, Segment 4 only changes the status of a claim.</p>
+      <p>Segment 1 writes <code>users</code>, <code>password_resets</code> and <code>audit_log</code>, Segment 2 writes <code>locations</code>, <code>items</code> and <code>item_images</code>, Segment 3 writes <code>matches</code> and <code>claims</code>, Segment 4 only changes the status of a claim.</p>
     </div>
     <div class="card">
       <h3>A real connection pool</h3>
@@ -263,10 +323,11 @@ bash run.sh --mysql</pre>
 
 <section id="database">
   <h2>Database</h2>
-  <p class="sub">MySQL 8, eight tables, foreign keys and indexes — created by <code>sql/01_schema.sql</code>.</p>
+  <p class="sub">MySQL 8, nine tables, foreign keys and indexes — created by <code>sql/01_schema.sql</code>.</p>
   <table>
     <tr><th>Table</th><th>Purpose</th><th>Written by</th></tr>
     <tr><td><code>users</code></td><td>The accounts: name, e-mail, student ID, hashed password, role, status</td><td>Segment 1</td></tr>
+    <tr><td><code>password_resets</code></td><td>The 6-digit PIN of a forgotten password, with its expiry</td><td>Segment 1</td></tr>
     <tr><td><code>audit_log</code></td><td>Every action: who, what, when, details</td><td>Segment 1</td></tr>
     <tr><td><code>notifications</code></td><td>The alerts of the dashboard</td><td>Segment 1</td></tr>
     <tr><td><code>locations</code></td><td>The places of the campus where something can be lost</td><td>Segment 2</td></tr>
@@ -288,8 +349,8 @@ bash run.sh --mysql</pre>
     <tr><th>Concept</th><th>Where it is in the code</th></tr>
     <tr><td>Classes and objects</td><td><code>User</code>, <code>Role</code>, <code>Session</code>, <code>OperationResult</code>, <code>DashboardStats</code> — the whole domain model</td></tr>
     <tr><td>Encapsulation</td><td>private fields with getters; <code>User.sanitized()</code> never lets the password hash leave the object</td></tr>
-    <tr><td>Inheritance</td><td><code>BaseFrame</code> is the abstract base of every window; <code>LoginFrame</code>, <code>RegisterFrame</code> and <code>MainFrame</code> extend it</td></tr>
-    <tr><td>Polymorphism</td><td>every DAO interface has two implementations — <code>JdbcUserDao</code> for MySQL and <code>InMemoryUserDao</code> for the demo; the application asks for the interface and never for the class</td></tr>
+    <tr><td>Inheritance</td><td><code>BaseFrame</code> is the abstract base of every window; <code>LoginFrame</code>, <code>RegisterFrame</code>, <code>ForgotPasswordFrame</code> and <code>MainFrame</code> extend it</td></tr>
+    <tr><td>Polymorphism</td><td>every DAO interface has two implementations — <code>JdbcUserDao</code> for MySQL and <code>InMemoryUserDao</code> for the memory mode; the application asks for the interface and never for the class</td></tr>
     <tr><td>Abstraction</td><td>the seven interfaces in <code>core/spi</code>, the abstract <code>BaseFrame</code>, the DAO interfaces in <code>db/dao</code></td></tr>
     <tr><td>Exception handling</td><td>try/catch in the DAOs, <code>DataAccessException</code> and <code>AccessDeniedException</code>, and <code>OperationResult</code> instead of exceptions across the interface</td></tr>
     <tr><td>Collections</td><td><code>ArrayList</code>, <code>HashMap</code>, <code>ConcurrentHashMap</code>, <code>CopyOnWriteArrayList</code> and <code>List.of()</code> in the service, registry and event classes</td></tr>

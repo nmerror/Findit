@@ -59,7 +59,7 @@ stored), and the demo comes last, when the whole system is fresh.
 **Slide 5 — the split of the team and the database.**
 > "Each of us owns a part and a set of tables — I take the coordination and the front, Muntasir the
 > item reporting, Rajmohan the matching and the verification, and I the authentication and the
-> dashboard. The database has eight tables with foreign keys; no segment ever writes into the
+> dashboard. The database has nine tables with foreign keys; no segment ever writes into the
 > tables of another one."
 
 **Slide 17 — the closing.**
@@ -72,11 +72,21 @@ stored), and the demo comes last, when the whole system is fresh.
 ### Member 4 — Sadikul Basar (20255103159) — *Segment 1: authentication, RBAC, dashboard, search & report*
 **Your slides: 6 – 9 and 14 – 16.** You have the biggest technical part.
 
-**Slide 6 — the login.**
-> "FindIt starts with the login screen. The identifier accepts the e-mail or the student ID, so the
-> student does not have to remember which one he registered with. The password is never stored as
-> text — we hash it with PBKDF2 with a random salt and compare the hashes. A wrong password gives
-> a message under the field, not a crash, and the session is closed when the window is closed."
+**Slide 6 — the entry screens: sign in, register, reset.**
+> "FindIt starts with three entry screens, all of them in black, white and grey. The sign-in card
+> accepts the e-mail or the student ID, so the student does not have to remember which one he
+> registered with. The password is never stored as text — we hash it with PBKDF2 with a random salt
+> and compare the hashes. A wrong password gives a message under the field, not a crash, and the
+> session is closed when the window is closed.
+>
+> *Creating an account takes two seconds:* a name, an ordinary e-mail address like
+> `user234@gmail.com` and a password. The student ID is optional — if you leave it empty, the system
+> generates one, so **everybody can register with a normal e-mail**.
+>
+> *And if somebody forgot the password?* The reset screen asks for the e-mail and sends a
+> **6-digit PIN**. The PIN is stored in the table `password_resets` with a ten-minute expiry, it can
+> be used **only once**, and a wrong PIN is refused. There is no mail server in the project yet, so
+> the code is shown on the screen and printed in the console — the logic behind it is the real one."
 
 **Slide 7 — the roles and the permissions.**
 > "There are two roles: student and administrator, and eleven permissions. The important part: the
@@ -86,11 +96,15 @@ stored), and the demo comes last, when the whole system is fresh.
 > log with the time and the details."
 
 **Slide 8 — the dashboard.**
-> "The dashboard is the main menu. The four cards are live numbers from the database — the lost
-> items, the found items, the open claims and the accounts. The claim pipeline shows how the claims
-> are distributed, the busiest locations show where things get lost, and the table below lists the
-> most recent reports. The numbers are real: they come from the database through the contracts of
-> the segments, and the four segments fill this screen automatically once they register."
+> "The dashboard is the main menu, and it is **honest**: the four cards are live numbers from the
+> database — the lost posts, the found posts, the accounts and my own posts. When nobody has posted
+> anything yet, the cards honestly show zero and the table says *'No lost item has been posted yet'*.
+> We deleted the demo data generator on purpose: **every row you see was really written into MySQL
+> by a user through this application.** There is no fake data anywhere in FindIt.
+>
+> Below the cards the recent lost posts appear with a small thumbnail of the photo that the owner
+> attached. The accounts table on the right lists the accounts the viewer may see — a student only
+> ever sees the other students, **the administrator account never appears in the student panel**."
 
 **Slide 9 — the search and the report.**
 > "One search box over people, items and claims — the segments join in through the same contract.
@@ -98,7 +112,8 @@ stored), and the demo comes last, when the whole system is fresh.
 > items, the claims and the audit log."
 
 **Slide 14 — the database.**
-> "Eight tables: users, audit log, notifications, locations, items, item images, matches and claims.
+> "Nine tables: users, password resets, audit log, notifications, locations, items, item images,
+> matches and claims.
 > Every statement is a PreparedStatement with question marks — the value is never glued into the
 > query, so the application is safe against SQL injection. We use all six operations of the
 > proposal: insert, select, update, delete, search and the join for the report."
@@ -110,7 +125,7 @@ stored), and the demo comes last, when the whole system is fresh.
 > failure, and there is a test that proves the rollback."
 
 **Slide 16 — the tests and the automatic build.**
-> "We have two test suites: 43 checks that run without a database, and 49 checks that run against a
+> "We have two test suites: 43 checks that run without a database, and 67 checks that run against a
 > real MySQL. Both run automatically on GitHub on every push and every pull request — the green
 > tick on the pull request is the proof that the code works. That is also how the screenshots of
 > this presentation are produced: the build server starts the application and takes them."
@@ -135,6 +150,14 @@ stored), and the demo comes last, when the whole system is fresh.
 **Be ready for:** *Why a photo and not only a description?* — because the office has to decide
 whether the claimant really owns the item, and a picture of the lost wallet is the only evidence
 that survives a week.
+
+> **What is already working and what is yours.** The *lost item* half of the reporting flow is
+> already working today: `PostService.postLostItem` writes the row into `items`, copies the picture
+> into `uploads/`, stores the path in `item_images` and puts the post on the board — and the owner
+> can close it again with **Confirm found**. That is the skeleton of your segment, and it is
+> already on the branch. **Your part** is the *found item* side: the same form for a found item, the
+> browse screen with the filters (type, category, location) and the locations management. Say this
+> openly in the viva — it shows that you know exactly where your segment starts.
 
 ---
 
@@ -173,8 +196,15 @@ Do it on the **administrator** account first, then switch to the student to show
 | 6 | Click **Audit Log** | "Every action of the last minutes is here — including the one I just did." | The audit trail |
 | 7 | Click **Reports**, then **Export as .csv** | "The report of the whole system in one file." | The reporting |
 | 8 | Sign out, sign in as `ayesha@buet.edu` / `Student@123` | "Notice: no user management, no audit log — the student account is smaller." | The role based navigation |
-| 9 | **My Profile** | "The student changes his own data and sees his own activity." | The profile screen |
-| 10 | Back to the GitHub tab | "Here is the pull request — the build server compiled the code, ran the 43 and the 49 tests and took these screenshots." | The continuous integration |
+| 9 | **Post a Lost Item** | "The category drop-down, the place, the description and a photo — this is how a real student reports something." | The reporting |
+| 10 | Pick a picture, press **Post the lost item** | "The photo is copied into the uploads folder and its path is stored in `item_images`." | The photo really works |
+| 11 | Back to the **Dashboard** | "The post is on the board with its thumbnail, and the counter went from 0 to 1." | The board is real data |
+| 12 | **My Posts** → **Confirm found** | "I got the item back, so the post is closed and disappears from the board." | The life cycle of a post |
+| 13 | Sign out, sign in as the administrator again | "Now the administrator sees every account, including mine." | The role based navigation |
+| 14 | **Manage Accounts** → **Delete account** | "The office can delete an account — the row is really gone from MySQL." | The admin control |
+| 15 | **Manage Posts** → **Remove the post** | "And the office can remove a post that is no longer needed." | The admin control |
+| 16 | **My Profile** | "The student changes his own data and sees his own activity." | The profile screen |
+| 17 | Back to the GitHub tab | "Here is the pull request — the build server compiled the code, ran the 43 and the 67 tests and took these screenshots." | The continuous integration |
 
 > **If something goes wrong:** do not debug live. Say "this is the running version" and go back to
 > the slides — the GitHub tab is the backup, it shows the same screens and the green build.
@@ -193,7 +223,11 @@ Do it on the **administrator** account first, then switch to the student to show
 | What is a `PreparedStatement` and why does it matter? | The query and the values are sent separately, so a value can never become part of the SQL — that is SQL injection protection. |
 | How do the four segments meet without conflicts? | Through the contracts in `core/spi`: Segment 1 declares the interfaces, the others implement them and register them at run time. |
 | What if a segment is not finished? | The contract has a temporary implementation, so the application always starts and the screen shows what is still missing. |
-| How do you know the code works? | 43 unit checks and 49 checks against a real MySQL, running automatically on every pull request. |
+| How do you know the code works? | 43 unit checks and 67 checks against a real MySQL, running automatically on every pull request. |
+| How does the forgotten password work? | The system creates a 6-digit code with `SecureRandom`, stores it in `password_resets` with a 10-minute expiry, and accepts it only once — a wrong, used or expired code is refused. |
+| Why is the dashboard full of zeros? | Because FindIt has no fake data: the demo generator was deleted, so every number comes from a real query and the board is empty until a student really posts something. |
+| Who can delete an account? | Only the administrator, and only through `UserService.deleteAccount` — the service checks the role, the button is just the visible part of it. |
+| Can a student see the administrator account? | No — `visibleAccounts` filters by role, so a student only sees students. There is a test that proves it. |
 | What would you do next? | The matching engine with a real similarity function, photo upload to the server instead of the local disk, and an export of the report as PDF. |
 
 ---
@@ -201,6 +235,8 @@ Do it on the **administrator** account first, then switch to the student to show
 ## 4. Before the presentation — the checklist
 
 - [ ] The demo database is loaded: `sql/01_schema.sql` **and** `sql/02_seed_data.sql`
+- [ ] The board is **empty** at the start of the demo — post live on stage, it is more convincing
+- [ ] A small picture is on the desktop, ready to attach to the demo post
 - [ ] The passwords of the demo accounts are changed back to the known ones
 - [ ] `bash run.sh --mysql` starts without an exception, and the dashboard shows real numbers
 - [ ] The laptop is charged, the screen resolution is at least 1400 × 900, and the font is readable

@@ -3,7 +3,7 @@
 #  FindIt - Campus Lost & Found System
 #  One-command launcher for Segment 1 (no database needed).
 #
-#    bash run.sh          -> start the app with demo data
+#    bash run.sh          -> start the app in memory mode (no database needed)
 #    bash run.sh --mysql  -> start the app against MySQL (see app.properties)
 #
 #  Requirements: JDK 17 or newer (it is free). Nothing else - no Maven, no MySQL.
@@ -107,14 +107,14 @@ if [ -d lib ] && [ -n "$(ls -A lib 2>/dev/null)" ]; then
 fi
 
 # --- 3. run ----------------------------------------------------------------
-MODE="--memory --demo"
+MODE="--memory"
 if [ "${1:-}" = "--mysql" ]; then
   MODE=""
   echo "Starting with MySQL (check app.properties for the credentials)..."
 else
-  echo "Starting in demo mode - no database required."
-  echo "Login: admin@findit.edu / Admin@1234   (ADMIN)"
-  echo "   or: ayesha@buet.edu / Student@123   (STUDENT)"
+  echo "Starting in memory mode - no database server needed."
+  echo "Create your own account on the registration screen."
+  echo "The first administrator is created automatically: admin@findit.edu / Admin@1234"
 fi
 
 java -cp "$CP" com.bubt.findit.Main $MODE

@@ -1,7 +1,8 @@
 name: Deploy the demo site
 
-# Builds the project on the GitHub server, takes a screenshot of every screen
-# and publishes them together with the project page on GitHub Pages:
+# Builds the project on the GitHub server, starts a real MySQL, takes a
+# screenshot of every screen and publishes them together with the project page
+# on GitHub Pages:
 # https://nmerror.github.io/Findit
 #
 # ONE-TIME SETUP (only needed once, by the repository owner):
@@ -25,6 +26,21 @@ jobs:
   build:
     name: Build the demo site
     runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: findit123
+          MYSQL_DATABASE: findit
+        ports:
+          - "3306:3306"
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pfindit123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
     steps:
       - name: Check out the code
         uses: actions/checkout@v4
@@ -46,22 +62,58 @@ jobs:
           curl -sSL -o lib/mysql-connector-j-8.4.0.jar \
             https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar
 
+      - name: Load the schema and the seed data
+        run: |
+          mysql -h 127.0.0.1 -uroot -pfindit123 < sql/01_schema.sql
+          mysql -h 127.0.0.1 -uroot -pfindit123 < sql/02_seed_data.sql
+
+      - name: Point the application at the test database
+        run: |
+          cat > app.properties <<'EOF'
+          app.name = FindIt
+          app.mode = mysql
+          db.url = jdbc:mysql://127.0.0.1:3306/findit?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          db.user = root
+          db.password = findit123
+          db.driver = com.mysql.cj.jdbc.Driver
+          session.timeout.minutes = 60
+          EOF
+
       - name: Compile the application
         run: |
           mkdir -p target/classes
           find src/main/java -name '*.java' > target/srcs.txt
           javac -encoding UTF-8 -d target/classes @target/srcs.txt
 
-      - name: Take the screenshots of every screen
+      - name: Take the screenshots of the entry screens
         run: |
           mkdir -p docs/site/images
-          for mode in login dashboard profile search users audit reports; do
+          for mode in login register reset; do
             xvfb-run -a --server-args="-screen 0 1400x900x24" \
-              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "docs/site/images/$mode.png"
+              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "docs/site/images/$mode.png" --mysql
+          done
+
+      - name: Take the screenshot of the empty dashboard
+        run: |
+          xvfb-run -a --server-args="-screen 0 1400x900x24" \
+            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot dashboard docs/site/images/dashboard.png --mysql
+
+      - name: Post one lost item through the application
+        run: |
+          java -cp "target/classes:lib/*" com.bubt.findit.tools.PostTool \
+            ayesha@buet.edu Student@123 "Wireless Mouse" ELECTRONICS "Exam Hall"
+
+      - name: Take the screenshots of the application
+        run: |
+          for mode in post profile search users posts audit reports my-posts; do
+            xvfb-run -a --server-args="-screen 0 1400x900x24" \
+              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "docs/site/images/$mode.png" --mysql
           done
           xvfb-run -a --server-args="-screen 0 1400x900x24" \
-            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot demo docs/site/images/dashboard-mysql.png --mysql
-          cp docs/images/architecture.svg docs/site/images/architecture.svg
+            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot dashboard docs/site/images/dashboard-live.png --mysql
+
+      - name: Copy the architecture diagram
+        run: cp docs/images/architecture.svg docs/site/images/architecture.svg
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

@@ -112,6 +112,7 @@ producing one product instead of four products.
 
 ```
 LoginFrame.performLogin()
+ForgotPasswordFrame — the 6-digit PIN reset (two steps: e-mail, then PIN + new password)
   → AuthService.login(identifier, password)
       → UserDao.findByEmail(email)  or  findByStudentId(id)
       → PasswordHasher.verify(password, salt, hash)     ← constant time
@@ -131,6 +132,7 @@ to ask "who is this?" with one line.
 
 ```
 DashboardPanel.refresh()
+PostService.postLostItem / confirmFound / deletePost — the three rules of the lost-and-found flow
   → DashboardService.build(viewer)
       → UserDao counts                       (Segment 1 data)
       → ServiceRegistry.get(ItemCatalogService)   → counts, recent items, locations
@@ -149,7 +151,7 @@ Segment 1's code**. That is the whole point.
 ### 3.3 Suspending a student
 
 ```
-UserManagementPanel (admin only)
+UserManagementPanel (admin only) — with the delete-account button
   → UserService.suspend(admin, userId)
       → rbac.require(admin, Permission.MANAGE_USERS)   ← refused if not allowed
       → refuse to suspend yourself

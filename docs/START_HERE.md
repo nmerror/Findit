@@ -133,11 +133,12 @@ ServiceRegistry.register(ItemCatalogService.class, new ItemCatalogServiceImpl())
 
 ## Step 6 — The screens (1–2 days)
 
-**Files:** `ui/common/UiTheme.java`, `ui/auth/LoginFrame.java`,
-`ui/auth/RegisterFrame.java`, `ui/MainFrame.java`, `ui/dashboard/DashboardPanel.java`,
-`ui/users/*`
+**Files:** `ui/common/UiTheme.java`, `ui/auth/AuthColors.java`,
+`ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java`, `ui/auth/ForgotPasswordFrame.java`,
+`ui/MainFrame.java`, `ui/dashboard/DashboardPanel.java`, `ui/posts/*`, `ui/users/*`
 
-Build in this order: theme → login → registration → main window → dashboard.
+Build in this order: theme → the three dark entry screens → main window → dashboard →
+the lost-and-found screens (`ui/posts/`).
 
 **The main window is the integration point for the UI.** `MainFrame` has a
 sidebar whose entries are filtered by role, and every other segment's screen is
@@ -153,7 +154,7 @@ do not open a second window.
 
 **File:** `src/test/java/com/bubt/findit/SelfTest.java`
 
-29 checks that run without a GUI and without a database. Keep them green —
+43 checks that run without a GUI and without a database. Keep them green —
 they are the fastest way to prove that a change did not break anything.
 
 Add one check per rule you add to the service layer.

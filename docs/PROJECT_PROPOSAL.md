@@ -70,7 +70,7 @@ List the specific and achievable objectives of the proposed project.
 
 1. To build a secure user authentication system with registration, PBKDF2 password hashing, session management and role based access control, so that every action of the application is performed by an identified and permitted user.
 
-2. To design one MySQL database with eight tables, foreign keys and indexes that covers the whole project, and to connect it to Java with JDBC and PreparedStatement through a connection pool and real transactions.
+2. To design one MySQL database with nine tables, foreign keys and indexes that covers the whole project, and to connect it to Java with JDBC and PreparedStatement through a connection pool and real transactions.
 
 3. To implement the complete workflow of the lost and found office - report, match, claim, verify and return - in four cooperating segments that are integrated through service contracts so that they can be developed in parallel.
 
@@ -94,11 +94,11 @@ Attach or sketch preliminary screen designs. The application must include at lea
 
 | Proposed Screen | Purpose / Main Controls |
 |---|---|
-| 1. Login / Registration Screen | The sign-in card with the identifier (e-mail or student ID), the password and the inline validation, and the registration form with the password policy and the field validation. Implemented in ui/auth/LoginFrame.java and ui/auth/RegisterFrame.java. |
-| 2. Dashboard / Main Menu | The main window with the navigation rail, the header with the global search and the clock, and the dashboard with four KPI cards (lost items, found items, open claims, users), the claim pipeline, the busiest locations and the table of the recent reports. Implemented in ui/MainFrame.java and ui/dashboard/DashboardPanel.java. |
-| 3. Data Management Screen | Administrator only: the list of all the accounts with the buttons to suspend, to restore and to change the role, and the audit log that shows every action of every user. Implemented in ui/users/UserManagementPanel.java and ui/users/AuditLogPanel.java. |
+| 1. Login / Registration / Password Reset Screen | Three entry screens in black, white and grey: the sign-in card with the identifier (e-mail or student ID), the password and the inline validation; the registration form with a normal e-mail address and an optional student ID; and the forgot-password screen that sends a 6-digit PIN. Implemented in ui/auth/LoginFrame.java, ui/auth/RegisterFrame.java and ui/auth/ForgotPasswordFrame.java. |
+| 2. Dashboard / Main Menu | The main window with the navigation rail, the header with the global search and the clock, and the dashboard with four KPI cards (lost posts, found posts, accounts, my posts), the table of the recent lost posts with the photo thumbnails and the table of the accounts the viewer may see. The dashboard starts at zero - FindIt ships without any fake data. Implemented in ui/MainFrame.java and ui/dashboard/DashboardPanel.java. |
+| 3. Data Management Screen | Administrator only: the list of all the accounts with the buttons to suspend, to restore, to change the role and to delete the account; the list of all the lost posts with the button to remove a post; and the audit log that shows every action of every user. Implemented in ui/users/UserManagementPanel.java, ui/posts/PostManagementPanel.java and ui/users/AuditLogPanel.java. |
 | 4. Search / Report Screen | The results of the global search over people, items and claims, and the report of the whole system with the export as a text file and as CSV. Implemented in ui/search/SearchResultsPanel.java and ui/reports/ReportPanel.java. |
-| Additional Screen (if any) | My Profile - the own account, the phone number, the password change and the activity of the own user. Implemented in ui/users/ProfilePanel.java. The screens of the segments 2, 3 and 4 are added into the same window with one call (MainFrame.addSegmentSection), so the whole application stays one program. |
+| Additional Screen (if any) | My Profile - the own account, the phone number, the password change and the activity of the own user. Implemented in ui/users/ProfilePanel.java. Plus the two lost-and-found screens: Post a Lost Item (title, category drop-down, brand, colour, place, description and photo) and My Posts (the own posts with the Confirm found button), both in ui/posts/. The screens of the segments 2, 3 and 4 are added into the same window with one call (MainFrame.addSegmentSection), so the whole application stays one program. |
 
 ## 8. Application of Java OOP Concepts
 
@@ -142,7 +142,7 @@ Attach a preliminary ER diagram and relational schema. Explain how JDBC (prefera
 |---|---|---|
 | Java Development Kit (JDK) | Temurin 17 (LTS) | Application development - the program is compiled with plain javac, no build tool is required to run it |
 | Java Swing / JavaFX | part of the JDK 17 | GUI development - the whole user interface: login, dashboard, user management, profile, audit log, search and report |
-| MySQL | 8.0 | Database management - eight tables with foreign keys and indexes, created by sql/01_schema.sql and filled by sql/02_seed_data.sql |
+| MySQL | 8.0 | Database management - nine tables with foreign keys and indexes, created by sql/01_schema.sql; sql/02_seed_data.sql loads the three accounts and the six campus locations (no fake posts) |
 | JDBC Driver | mysql-connector-j 8.4.0 | Java-database connectivity - every statement is a PreparedStatement with ? placeholders; the connections come from a pool of eight |
 | IDE | IntelliJ IDEA + VS Code | Coding and debugging |
 | Other tools (if any) | Git, GitHub, GitHub Actions, GitHub Pages | Version control, the pull requests, the automatic build (43 unit tests and 49 database tests on every commit) and the public project page with the screenshots |
@@ -185,7 +185,7 @@ List the books, official documentation, websites, tutorials, or other resources 
 | Member 1: MD. Nurul Azom Arif (20255103126) - Leader | Project leadership, requirement analysis and the proposal, the coordination of the four segments and of the database contract, the UML and ER diagrams, the integration of the segments into one application, the documentation of the project and the final presentation. |
 | Member 2: Muntasir Al Simum (20255103134) - Co-Leader | Segment 2 - Lost and Found Item Reporting, Image Upload and Location Management: the reporting form, the image upload, the management of the campus locations, the browsing and the filtering of the open reports and the ItemCatalogService implementation. |
 | Member 3: Rajmohan Chandra Shil (20255103149) - Co-Leader | Segments 3 and 4 - Intelligent Item Matching, Similarity Detection, Ownership Claim Management, Administrative Verification and Item Return Management: the matching engine with its similarity score, the claim and the verification queue, the return confirmation and the MatchQueryService, ClaimQueryService and AdminWorkloadService implementations. |
-| Member 4: Sadikul Basar (20255103159) - Co-Leader | Segment 1 - User Authentication, Access Control and Dashboard Management: the whole MySQL schema and the JDBC layer with the connection pool and the transactions, the DAOs of the eight tables, the authentication with PBKDF2 hashing, the sessions, the role based access control, the audit trail, the dashboard, the global search, the report, the login, profile, user management and audit screens, and the automatic build with GitHub Actions. |
+| Member 4: Sadikul Basar (20255103159) - Co-Leader | Segment 1 - User Authentication, Access Control and Dashboard Management: the whole MySQL schema and the JDBC layer with the connection pool and the transactions, the DAOs of the nine tables, the authentication with PBKDF2 hashing, the sessions, the role based access control, the audit trail, the dashboard, the global search, the report, the login, profile, user management and audit screens, and the automatic build with GitHub Actions. |
 
 ## 16. Course Teacher's Evaluation
 

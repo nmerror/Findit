@@ -88,15 +88,23 @@ jobs:
       - name: Run the database tests against MySQL
         run: java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest
 
-      - name: Take the screenshots of every screen
+      - name: Take the screenshot of the empty board
         run: |
           mkdir -p target/screenshots
-          for mode in login dashboard profile search users audit reports; do
-            xvfb-run -a --server-args="-screen 0 1400x900x24" \
-              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "target/screenshots/$mode.png"
-          done
           xvfb-run -a --server-args="-screen 0 1400x900x24" \
-            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot demo target/screenshots/dashboard-mysql.png --mysql
+            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot dashboard target/screenshots/dashboard-empty.png --mysql
+
+      - name: Post one lost item through the application
+        run: |
+          java -cp "target/classes:lib/*" com.bubt.findit.tools.PostTool \
+            ayesha@buet.edu Student@123 "Wireless Mouse" ELECTRONICS "Exam Hall"
+
+      - name: Take the screenshots of every screen
+        run: |
+          for mode in login register reset dashboard profile search users posts audit reports post my-posts; do
+            xvfb-run -a --server-args="-screen 0 1400x900x24" \
+              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "target/screenshots/$mode.png" --mysql
+          done
 
       - name: Upload the screenshots
         uses: actions/upload-artifact@v4

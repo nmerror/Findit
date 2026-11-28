@@ -4,12 +4,13 @@
 [![Project page](https://img.shields.io/badge/project%20page-nmerror.github.io%2FFindit-0e7c9b)](https://nmerror.github.io/Findit)
 
 **FindIt – Campus Lost & Found Management System**
-Segment 1: *User Authentication, Role-Based Access Control & Dashboard Management*
+Segment 1: *User Authentication, Role-Based Access Control & Dashboard Management* — plus the first
+working lost-and-found flow: **post a lost item with a photo, close it when it is found, let the
+office remove it.**
 
-This is the foundation of the whole project. It contains the identity model,
-the RBAC rules, the login/registration screens, the dashboard, and — most
-importantly — the **contracts** that let Segments 2, 3 and 4 plug in without
-Segment 1 ever changing.
+> **There is no fake data in this project.** The dashboard starts at zero, the board is empty and
+> every row you see was really written into MySQL by a user through the application. The demo data
+> generator that used to sit in `tools/` has been deleted on purpose.
 
 ---
 
@@ -51,25 +52,10 @@ mvn -q compile
 java -cp target/classes com.bubt.findit.Main --memory
 ```
 
-Add `--demo` and the dashboard fills up with **fake data from Segments 2/3/4** —
-so you can present a complete dashboard before your teammates have written
-anything:
-
-```bash
-java -cp target/classes com.bubt.findit.Main --memory --demo
-```
-
-or with Maven:
-
-```bash
-mvn -q clean package
-java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
-```
-
 | Flag | Effect |
 |---|---|
 | `--memory` | runs everything in RAM, no database server needed |
-| `--demo` | installs fake Segment 2/3/4 data so the dashboard looks complete |
+| `--mysql` | runs against the real MySQL database (`app.properties`) |
 
 **Logins**
 
@@ -77,18 +63,38 @@ java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
 |---|---|---|
 | ADMIN | `admin@findit.edu` | `Admin@1234` |
 | STUDENT | `ayesha@buet.edu` | `Student@123` |
+| STUDENT | `tanvir@buet.edu` | `Student@123` |
+
+You can also **create your own account** in two seconds — the registration screen
+only asks for a name, an ordinary e-mail address (for example `user234@gmail.com`),
+a password and — optionally — a student ID. If you leave the student ID empty,
+the system generates one for you.
 
 ---
 
 ## 2. The screens
 
+### The entry screens — black, white and grey
+
+| Screen | File | What it does |
+|---|---|---|
+| Sign in | `ui/auth/LoginFrame.java` | dark card, e-mail **or** student ID, links to register and to the reset |
+| Create an account | `ui/auth/RegisterFrame.java` | dark, normal e-mail, optional student ID |
+| Forgot the password | `ui/auth/ForgotPasswordFrame.java` | dark, two steps: e-mail → **6-digit PIN** → new password |
+
+The three entry screens are the only dark ones. They use black, white and grey
+only — see `ui/auth/AuthColors.java`.
+
+### The application — one light theme
+
 | Screen | File | What it shows |
 |---|---|---|
-| Login / Registration | `ui/auth/LoginFrame.java` | one centred sign-in card, inline validation |
-| Dashboard / Main Menu | `ui/dashboard/DashboardPanel.java` | 4 KPI cards, claim-pipeline bar, location bars, live table |
-| Data Management | `ui/users/UserManagementPanel.java` | admin-only: suspend / restore / change role |
-| Search / Report | `ui/search/SearchResultsPanel.java`, `ui/reports/ReportPanel.java` | global search + text/CSV export |
-| Additional | `ui/users/AuditLogPanel.java`, `ui/users/ProfilePanel.java` | audit trail, profile + activity feed |
+| Dashboard | `ui/dashboard/DashboardPanel.java` | 4 KPI cards, the recent lost posts with photo thumbnails, the accounts |
+| Post a lost item | `ui/posts/PostLostItemPanel.java` | title, **category drop-down**, brand, colour, place, description, **photo** |
+| My Posts | `ui/posts/MyPostsPanel.java` | the posts of the signed-in student + **Confirm found** |
+| Manage Accounts (admin) | `ui/users/UserManagementPanel.java` | every account + **Delete account** |
+| Manage Posts (admin) | `ui/posts/PostManagementPanel.java` | every post of the campus + **Remove the post** |
+| My Profile / Search / Reports / Audit Log | `ui/users/ProfilePanel.java`, `ui/search/…`, `ui/reports/…`, `ui/users/AuditLogPanel.java` | profile, global search, export, audit trail |
 
 > PNG screenshots of every screen live in `docs/images/`. They are not
 > committed here because the GitHub API used for this upload is text-only.
@@ -97,12 +103,51 @@ java -cp "target/classes:target/lib/*" com.bubt.findit.Main --memory
 
 ---
 
-## 3. The interface — one light theme, flat and plain
+## 3. How the lost-and-found flow works
+
+Three rules, and they live in **one small file** — `service/PostService.java`:
+
+1. **A student posts a lost item.** Title, category (*electronic, documents, accessories,
+   clothing, keys, books, other*), brand, colour, the place on campus, a description and
+   **a photo**. The picture is copied into `uploads/` and its path is stored in
+   `item_images`; the board shows it as a small thumbnail.
+2. **The owner clicks “Confirm found”.** The post gets the status `CLOSED` and disappears
+   from the open board — the row stays in the database for the audit trail.
+3. **The administrator can remove a post at any time** with “Remove the post” — a real
+   `DELETE`.
+
+### Who sees what
+
+| | Student | Administrator |
+|---|---|---|
+| Dashboard | lost posts, own posts, **only student accounts** | everything, **all accounts** |
+| Post a lost item / My Posts | yes | — |
+| Manage Accounts / Manage Posts / Audit Log | — | yes |
+
+The administrator account is **never** listed in the student panel — `UserService.visibleAccounts()`
+filters by role, and the test suite proves it.
+
+### Forgot the password — the PIN
+
+1. The student writes their e-mail on the *Forgot your password* screen.
+2. The system creates a **6-digit PIN** (`SecureRandom`), stores it in the table
+   `password_resets` with a 10-minute expiry and shows it on the screen (and prints it
+   in the console — the project has no mail server yet).
+3. The student writes the PIN and the new password. The PIN is used once and then
+   marked as used.
+4. The old password stops working, the new one works.
+
+A wrong PIN is refused, a used PIN is refused, and an expired PIN is refused.
+
+---
+
+## 4. The interface — one light theme, flat and plain
 
 The application uses **one** light theme and **flat** surfaces: no gradients,
 no glows, no dark mode, no custom title bar. The window keeps the decorations
 of the operating system, so it behaves like every other program on the
-machine.
+machine. Only the three entry screens (sign in / register / reset) are dark,
+because black, white and grey make the first contact look calm and serious.
 
 The look-and-feel is **Nimbus** (part of every JDK) and the colours of the
 standard Swing widgets are set in `ui/common/UiTheme.java`, so tables, scroll
@@ -110,7 +155,7 @@ bars and text fields look native.
 
 ---
 
-## 4. The interface — a small design system
+## 5. The interface — a small design system
 
 The cards, buttons, inputs and charts are painted by hand, so the project
 looks the same on every machine.
@@ -118,11 +163,15 @@ looks the same on every machine.
 | Component | What it gives you |
 |---|---|
 | `UiTheme` | Every colour, radius and font in one file (white surfaces + teal/violet accents) |
+| `AuthColors` | The black / white / grey palette of the entry screens |
 | `Fonts` | Uses the system interface font, falls back to the Java logical font |
 | `BaseFrame` | Base class of every window: title, size and the panel for the content |
 | `RoundedPanel` | Cards with rounded corners, flat fill and a hairline border |
 | `AppButton` | Primary / secondary / danger / quiet buttons with a hover state |
 | `ModernTextField` | Flat input with a thin border, an accent focus border and a placeholder |
+| `FlatComboBox` | Flat drop-down with a chevron — used for the category and the place |
+| `PhotoRenderer` | Draws the thumbnail of a lost item in a table cell (and caches it) |
+| `EmptyState` | The friendly "nothing here yet" message of an empty table |
 | `NavButton` | Sidebar item with vector glyph and an accent bar when active |
 | `StatCard` | KPI card — caption, big number, glyph badge |
 | `StackedBar` / `BarList` | Charts drawn with Graphics2D (no charting library) |
@@ -137,10 +186,10 @@ like one product.
 
 ---
 
-## 5. Run it with MySQL (what the proposal asks for)
+## 6. Run it with MySQL (what the proposal asks for)
 
 **Step 1 — create the database.** The schema has the **whole project** in it:
-eight tables with foreign keys, indexes and constraints.
+nine tables with foreign keys, indexes and constraints.
 
 ```bash
 mysql -u root -p < sql/01_schema.sql
@@ -165,17 +214,25 @@ bash run.sh --mysql
 ```
 
 The launcher puts the MySQL driver (from `lib/`) on the classpath for you.
-With a database attached the dashboard, the report and the search read the
-**real tables** — the demo data is only used in memory mode.
+With a database attached the dashboard, the board, the report and the search read
+the **real tables**.
 
-Seeded logins:
+### What the seed file contains — and what it does not
 
-| Account | E-mail | Password | Role |
-|---|---|---|---|
-| Administrator | `admin@findit.edu` | `Admin@1234` | ADMIN |
-| Student | `ayesha@buet.edu` | `Student@123` | STUDENT |
+`sql/02_seed_data.sql` loads **three accounts and the six places of the campus**. It loads
+**no lost items** — the board starts empty, exactly like it does on a fresh installation.
+Every post you see in the application was written by a user through the application.
 
-## 6. Verify the logic
+The passwords are hashed with `PBKDF2WithHmacSHA256` (120,000 rounds, a random salt per
+account). To build a hash for a new password run:
+
+```bash
+java -cp target/classes com.bubt.findit.tools.HashTool MySecret123
+```
+
+---
+
+## 7. Verify the logic
 
 **Without a GUI and without a database** (43 checks):
 
@@ -189,11 +246,28 @@ builder, and — the important one — the dashboard and the search picking up a
 fake Segment 2 implementation **through the contract, with no change in
 Segment 1's code**.
 
-**Against the real database** (49 checks — users, audit trail, notifications,
-items, matches, claims, the contracts, transactions and the connection pool):
+**Against the real database** (67 checks — users, audit trail, notifications,
+items, matches, claims, the contracts, transactions, the connection pool **and the
+complete lost-and-found flow**):
 
 ```bash
 java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest
+```
+
+The database test walks through the whole story of the application:
+
+```
+register with user234@gmail.com  →  the student ID is generated
+request a reset                  →  a 6-digit PIN arrives
+wrong PIN                        →  refused
+right PIN + new password         →  the password is changed
+old password                     →  no longer works
+the same PIN again               →  refused
+post a lost item                 →  it is on the board
+confirm found                    →  it disappears from the board
+the administrator removes a post  →  it is gone for good
+the administrator deletes an account →  it is gone for good
+a student never sees the manager  →  proven
 ```
 
 Run the second one after every change in `db/` — it is the test that catches
@@ -201,7 +275,7 @@ the mistakes the in-memory mode hides.
 
 ---
 
-## 7. Project layout
+## 8. Project layout
 
 ![architecture](docs/images/architecture.svg)
 
@@ -209,32 +283,37 @@ the mistakes the in-memory mode hides.
 findit/
 ├── pom.xml
 ├── .github/workflows/
-│   ├── ci.yml                  ← the automatic build: compile + 43 + 49 tests
+│   ├── ci.yml                  ← the automatic build: compile + 43 + 67 tests
 │   └── pages.yml               ← the project page with the screenshots
 ├── sql/
-│   ├── 01_schema.sql          ← database contract for all 4 segments
-│   └── 02_seed_data.sql
+│   ├── 01_schema.sql          ← database contract for all 4 segments (9 tables)
+│   └── 02_seed_data.sql       ← 3 accounts + 6 campus locations, no fake posts
 ├── docs/
 │   ├── START_HERE.md           ← your day-by-day plan
 │   ├── PROJECT_DESCRIPTION.md  ← the full description of the project
 │   ├── PRESENTATION_SCRIPT.md  ← who presents which part
 │   ├── SEGMENT1_DESIGN.md      ← how Segment 1 is designed
+│   ├── SEGMENT1_FILE_INDEX.md  ← every file, and who owns it
 │   ├── INTEGRATION_CONTRACT.md ← what your teammates must implement
 │   ├── site/                   ← the project page (GitHub Pages)
 │   └── images/
 └── src/main/java/com/bubt/findit/
     ├── core/                   ← SHARED CODE — everybody may use it
-    │   ├── model/              ← User, Role, Permission, Session, DashboardStats…
+    │   ├── model/              ← User, Role, Permission, Session, ItemSummary…
     │   ├── spi/                ← SERVICE CONTRACTS (implemented by Segments 2/3/4)
     │   │   └── stub/           ← temporary placeholders so the app always runs
     │   ├── event/              ← EventBus, AppEvent, Events
     │   ├── registry/           ← ServiceRegistry (the wiring hub)
     │   ├── util/               ← PasswordHasher, Validation
     │   └── AuthContext.java    ← "who is using the app right now"
-    ├── db/                     ← JDBC layer (Segment 1 owns users + audit_log)
+    ├── db/                     ← the JDBC layer, one DAO per table
     │   └── dao/
     ├── service/                ← business rules (Segment 1)
+    │   └── PostService.java    ← the three rules of the lost-and-found flow
     ├── ui/                     ← Swing screens (Segment 1)
+    │   ├── auth/               ← login, register, forgot password (dark)
+    │   ├── posts/              ← post, my posts, manage posts
+    │   ├── dashboard/  users/  search/  reports/  common/
     ├── app/AppServices.java    ← dependency container
     ├── config/AppConfig.java
     └── Main.java
@@ -242,15 +321,15 @@ findit/
 
 ---
 
-## 8. The automatic build and the project page
+## 9. The automatic build and the project page
 
 **Every push and every pull request is built and tested by GitHub itself**
 (`.github/workflows/ci.yml`). The build server
 
-1. compiles the 104 source files with JDK 17,
+1. compiles the source files with JDK 17,
 2. starts a real **MySQL 8** in a container and loads `sql/01_schema.sql` and `sql/02_seed_data.sql`,
 3. runs the **43** unit tests,
-4. runs the **49** database tests against that MySQL server,
+4. runs the **67** database tests against that MySQL server,
 5. starts the application on a virtual screen and takes a screenshot of every screen.
 
 The green tick on the pull request is the proof that the code works — for the teacher and for the
@@ -271,9 +350,9 @@ Source: **GitHub Actions***.
 
 ---
 
-## 9. The four rules that keep the team out of merge conflicts
+## 10. The four rules that keep the team out of merge conflicts
 
-1. **A segment only writes its own tables.** Segment 1 owns `users` and
+1. **A segment only writes its own tables.** Segment 1 owns `users`, `password_resets` and
    `audit_log`; Segment 2 owns `locations`, `items`, `item_images`; Segment 3
    owns `matches`, `claims`; Segment 4 writes only `claims` and `audit_log`.
    Everything else is read through a foreign key.
@@ -291,7 +370,7 @@ Source: **GitHub Actions***.
 
 ---
 
-## 10. Where to start (full plan in `docs/START_HERE.md`)
+## 11. Where to start (full plan in `docs/START_HERE.md`)
 
 | Step | What you build | Why it is first |
 |---|---|---|

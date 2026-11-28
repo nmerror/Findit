@@ -35,7 +35,7 @@ asks "who did what?".
 
 | Row in the proposal | Owner | Where it lives |
 |---|---|---|
-| **User Login and Authentication** | **Segment 1 (me)** | `service/AuthService.java`, `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java` |
+| **User Login and Authentication** | **Segment 1 (me)** | `service/AuthService.java`, `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java`, `ui/auth/ForgotPasswordFrame.java` (the 6-digit PIN reset), `db/dao/PasswordResetDao.java` |
 | Module 1 | Segment 2 | `MainFrame.addSegmentSection(...)` — the slot is created on demand |
 | Module 2 | Segment 3 | same |
 | Module 3 | Segment 4 | same |
@@ -47,11 +47,11 @@ asks "who did what?".
 
 | Required screen | Owner | My class |
 |---|---|---|
-| 1. Login / Registration Screen | **Segment 1 (me)** | `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java` |
+| 1. Login / Registration / Reset Screen | **Segment 1 (me)** | `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java`, `ui/auth/ForgotPasswordFrame.java` |
 | 2. Dashboard / Main Menu | **Segment 1 (me)** | `ui/MainFrame.java`, `ui/dashboard/DashboardPanel.java` |
 | 3. Data Management Screen | **Segment 1 (me)** | `ui/users/UserManagementPanel.java` (admin), `ui/users/ProfilePanel.java` |
 | 4. Search / Report Screen | **Segment 1 (me)** | `ui/search/SearchResultsPanel.java`, `ui/reports/ReportPanel.java` |
-| Additional screen | **Segment 1 (me)** | `ui/users/AuditLogPanel.java` (audit trail) |
+| Additional screen | **Segment 1 (me)** | `ui/users/AuditLogPanel.java` (audit trail), `ui/posts/PostLostItemPanel.java` (post a lost item with a photo), `ui/posts/MyPostsPanel.java` (Confirm found), `ui/posts/PostManagementPanel.java` (remove a post) |
 
 **Segment 1 therefore delivers 4 of the 4 required screens + 1 additional
 screen.** The other segments add their screens inside the same window with

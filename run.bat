@@ -3,7 +3,7 @@ REM ---------------------------------------------------------------------------
 REM  FindIt - Campus Lost & Found System
 REM  One-command launcher for Segment 1 (no database needed).
 REM
-REM    run.bat          -> start the app with demo data
+REM    run.bat          -> start the app in memory mode (no database needed)
 REM    run.bat --mysql  -> start the app against MySQL
 REM
 REM  Requirements: JDK 17 or newer.  Nothing else - no Maven, no MySQL.
@@ -68,12 +68,12 @@ REM classpath when it is there.
 set CP=target\classes
 if exist lib\mysql-connector-j-8.4.0.jar set CP=target\classes;lib\*
 
-set MODE=--memory --demo
+set MODE=--memory
 if "%1"=="--mysql" (
   set MODE=
   echo Starting with MySQL ^(check app.properties for the credentials^)...
 ) else (
-  echo Starting in demo mode - no database required.
+  echo Starting in memory mode - no database required.
   echo Login: admin@findit.edu / Admin@1234   ^(ADMIN^)
   echo    or: ayesha@buet.edu / Student@123   ^(STUDENT^)
 )

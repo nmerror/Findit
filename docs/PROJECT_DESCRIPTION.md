@@ -58,7 +58,7 @@ parallel without stepping on each other.
 1. **A secure, role based login.** Students and administrators sign in with their e-mail or their
    student ID; passwords are never stored in plain text, sessions expire, and every protected
    action is checked against a permission — in the service layer, not in the button handler.
-2. **A complete database for the whole project.** One MySQL schema with eight tables, foreign
+2. **A complete database for the whole project.** One MySQL schema with nine tables, foreign
    keys and indexes, written once by the team and owned table by table, so that the segments can
    be developed in parallel without writing into each other's data.
 3. **A clear path from a lost item back to its owner.** Report → match → claim → verify → return,
@@ -74,6 +74,8 @@ parallel without stepping on each other.
 | Module | Owner | What it does |
 |---|---|---|
 | **User login and authentication** | Segment 1 | Registration and sign-in, PBKDF2 hashing with a salt, sessions with an expiry, role based access control, the audit trail |
+| **Password reset by PIN** | Segment 1 | A 6-digit code with a 10-minute expiry, stored in `password_resets`, used once — for everybody who forgot the password |
+| **The lost-and-found flow** | Segment 1 | Post a lost item with a category and a photo, close it with *Confirm found*, remove it as the office — the three rules live in `PostService` |
 | **Module 1 — item reporting** | Segment 2 | Report a lost or found item (category, brand, colour, location, description, photo), browse and filter the open reports |
 | **Module 2 — intelligent matching** | Segment 3 | Compare the lost and the found reports, score the similarity, propose the pairs that belong together |
 | **Module 3 — claims and verification** | Segment 3 & 4 | Claim an item, check the photo evidence, approve or reject the claim, confirm the return to the owner |
@@ -83,11 +85,15 @@ parallel without stepping on each other.
 
 | # | Screen | What it does |
 |---|---|---|
-| 1 | **Login / Registration** | The login card (e-mail or student ID + password) with inline validation, and the registration form with the password policy |
-| 2 | **Dashboard / Main Menu** | Four KPI cards (lost, found, open claims, users), the claim pipeline, the busiest locations, the table of the recent reports |
-| 3 | **Data Management** | The list of the accounts with suspend, restore and role change — administrator only |
-| 4 | **Search / Report** | The global search and the report of the system with the export as `.txt` and as `.csv` |
+| 1 | **Login / Registration / Forgot password** | Three dark entry screens in black, white and grey: the sign-in card (e-mail or student ID + password), the registration form with a normal e-mail address, and the reset with a 6-digit PIN |
+| 2 | **Dashboard / Main Menu** | Four KPI cards (lost posts, found posts, accounts, my posts), the table of the recent lost posts with the photo thumbnails, and the accounts the viewer may see |
+| 3 | **Post a lost item / My Posts** | The report form (category drop-down, brand, colour, place, description, **photo**) and the own posts with the **Confirm found** button |
+| 4 | **Data Management** | The list of the accounts with suspend, restore, role change and **delete account** — administrator only; plus **Manage Posts** with *Remove the post* |
+| 5 | **Search / Report** | The global search and the report of the system with the export as `.txt` and as `.csv` |
 | + | **Profile** and **Audit Log** | The own account, the password change, the activity feed; and the complete trail of every action |
+
+> **The dashboard starts at zero.** FindIt ships without a single fake lost item: the board is empty
+> until a real student posts something. Every number on the screen comes from a real query.
 
 ---
 
@@ -114,26 +120,26 @@ parallel without stepping on each other.
                             └────────────────┘
 ```
 
-### The package map (104 files, about 9 400 lines)
+### The package map (119 files, about 11 700 lines)
 
 | Package | Files | Lines | What is inside |
 |---|---:|---:|---|
-| `core/model` | 13 | 861 | `User`, `Role`, `Permission`, `UserStatus`, `Session`, `OperationResult`, `DashboardStats`, `ItemSummary`, `ItemType`, `ItemCategory`, `ClaimSummary`, `LocationCount` |
+| `core/model` | 13 | 900 | `User`, `Role`, `Permission`, `UserStatus`, `Session`, `OperationResult`, `DashboardStats`, `ItemSummary`, `ItemType`, `ItemCategory`, `ClaimSummary`, `LocationCount` |
 | `core/spi` | 7 | 224 | The seven contracts of the segments + `SearchContributor` |
 | `core/spi/stub` | 5 | 184 | Temporary implementations so the application always starts |
 | `core/event` | 4 | 187 | `AppEvent`, `EventBus`, `EventListener`, `Events` |
 | `core/registry` | 1 | 109 | `ServiceRegistry` — the wiring hub |
 | `core/util` | 2 | 132 | `PasswordHasher` (PBKDF2), `Validation` |
-| `db` | 3 | 464 | `ConnectionPool`, `Database`, `DaoFactory` |
-| `db/dao` | 20 | 1 589 | The DAO interface + the JDBC and the in-memory implementation of every table |
-| `service` | 9 | 971 | The business rules |
+| `db` | 3 | 500 | `ConnectionPool`, `Database`, `DaoFactory` |
+| `db/dao` | 24 | 2 140 | The DAO interface + the JDBC and the in-memory implementation of every table |
+| `service` | 10 | 1 300 | The business rules |
 | `service/data` | 5 | 251 | The database backed reference implementations of the contracts |
-| `ui` | 28 | 3 653 | The screens and the small design system |
-| `app`, `config`, `tools` | 5 | 617 | `AppServices` (the container), `AppConfig`, `Main`, the screenshot and the demo tools |
+| `ui` | 39 | 5 173 | The screens and the small design system |
+| `app`, `config`, `tools` | 4 | 458 | `AppServices` (the container), `AppConfig`, `Main` and the two helper tools |
 
 ### The three rules that keep four people out of a merge conflict
 
-1. **A segment only writes its own tables.** Segment 1 owns `users` and `audit_log`; Segment 2 owns
+1. **A segment only writes its own tables.** Segment 1 owns `users`, `password_resets` and `audit_log`; Segment 2 owns
    `locations`, `items` and `item_images`; Segment 3 owns `matches` and `claims`; Segment 4 changes
    the status of a claim. Everything else is read through the foreign keys.
 2. **Segment 1 never imports a class of Segment 2, 3 or 4.** It only uses the interfaces of
@@ -162,11 +168,14 @@ Nothing else has to be re-plumbed — that is the whole point of the contract la
 
 ## 6. The database
 
-Eight tables, created by `sql/01_schema.sql`, filled with the demo data by `sql/02_seed_data.sql`.
+Nine tables, created by `sql/01_schema.sql`. `sql/02_seed_data.sql` loads the three accounts and
+the six places of the campus — and **no lost items**: the board starts empty, exactly like on a fresh
+installation.
 
 | Table | Purpose | Primary key | Owner |
 |---|---|---|---|
 | `users` | The accounts: name, e-mail, student ID, hashed password, role, status | `user_id` | Segment 1 |
+| `password_resets` | The 6-digit PIN of a forgotten password (one row per request) | `reset_id` | Segment 1 |
 | `audit_log` | Every action: user, action, timestamp, details | `audit_id` | Segment 1 |
 | `notifications` | The alerts of the dashboard | `notification_id` | Segment 1 |
 | `locations` | The places of the campus | `location_id` | Segment 2 |
@@ -233,11 +242,11 @@ query string**, so the application is safe against SQL injection. The connection
 | Check | How | Result |
 |---|---|---|
 | The unit tests | `java -cp target/classes:target/test-classes com.bubt.findit.SelfTest` | **43 / 43** |
-| The database tests | `java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest` against a live MySQL | **49 / 49** |
+| The database tests | `java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest` against a live MySQL | **67 / 67** |
 | The automatic build | GitHub Actions on every push and every pull request — compiles, tests, takes the screenshots | green tick on the pull request |
 | The clean check-out | `git clone` + `bash setup-java.sh` + `bash run.sh` — the application starts with no exception | verified |
 
-The test suite is the safety net of the team: after **any** change in `db/` the 49 database tests
+The test suite is the safety net of the team: after **any** change in `db/` the 67 database tests
 have to run against a real MySQL, because the in-memory mode hides exactly the mistakes that
 matter (a wrong column name, a broken join, a transaction that does not roll back).
 
@@ -264,7 +273,7 @@ findit/
 ├── .github/workflows/ci.yml        ← the automatic build and test
 ├── .github/workflows/pages.yml     ← the project page with the screenshots
 ├── sql/01_schema.sql               ← the database of the whole project
-├── sql/02_seed_data.sql            ← the demo data
+├── sql/02_seed_data.sql            ← 3 accounts + 6 locations (no fake posts)
 ├── docs/                           ← the design, the contract, the description
 ├── docs/site/                      ← the project page (GitHub Pages)
 ├── run.sh / run.bat                ← compile and start
@@ -283,7 +292,7 @@ findit/
 
 ## 12. How to run it
 
-### The demo — no database server needed
+### Without a database server — the memory mode
 
 ```bash
 git clone https://github.com/nmerror/Findit.git
@@ -301,8 +310,10 @@ mysql -u root -p < sql/02_seed_data.sql
 bash run.sh --mysql
 ```
 
-**Log in:** `admin@findit.edu` / `Admin@1234` (administrator) or `ayesha@buet.edu` / `Student@123`
-(student).
+**Log in:** `admin@findit.edu` / `Admin@1234` (administrator), `ayesha@buet.edu` / `Student@123`
+or `tanvir@buet.edu` / `Student@123` (students). You can also create your own account on the
+registration screen — a normal e-mail address is enough, the student ID is generated when you leave
+it empty.
 
 ---
 
