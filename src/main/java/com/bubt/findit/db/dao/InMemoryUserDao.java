@@ -115,6 +115,18 @@ public class InMemoryUserDao implements UserDao {
     }
 
     @Override
+    public List<User> findByRole(Role role, int limit) {
+        List<User> matching = new ArrayList<>();
+        for (User user : users.values()) {
+            if (role == null || user.getRole() == role) {
+                matching.add(user);
+            }
+        }
+        matching.sort(Comparator.comparing(User::getId));
+        return new ArrayList<>(matching.subList(0, Math.min(limit, matching.size())));
+    }
+
+    @Override
     public long countAll() {
         return users.size();
     }

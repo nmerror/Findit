@@ -138,6 +138,30 @@ public class JdbcUserDao implements UserDao {
     }
 
     @Override
+    public List<User> findByRole(Role role, int limit) {
+        String sql = "SELECT * FROM users WHERE role = ? ORDER BY user_id LIMIT ?";
+        List<User> users = new ArrayList<>();
+        Connection connection = null;
+        try {
+            connection = Database.getConnection();
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setString(1, role == null ? "STUDENT" : role.name());
+                statement.setInt(2, Math.max(1, limit));
+                try (ResultSet rs = statement.executeQuery()) {
+                    while (rs.next()) {
+                        users.add(map(rs));
+                    }
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("Could not read the accounts", ex);
+        } finally {
+            Database.release(connection);
+        }
+        return users;
+    }
+
+    @Override
     public long countAll() {
         return count("SELECT COUNT(*) FROM users");
     }
