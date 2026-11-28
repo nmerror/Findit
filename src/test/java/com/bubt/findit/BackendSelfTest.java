@@ -101,6 +101,7 @@ public final class BackendSelfTest {
             testClaims(claims, items, userId);
             testContracts(items, claims);
             testTransactions(userId);
+            testLostAndFoundFlow(services, items, userId);
             testPool();
         } finally {
             deleteTestUser(users, userId);
@@ -359,6 +360,93 @@ public final class BackendSelfTest {
         } catch (RuntimeException ignored) {
             // Not fatal for the test result.
         }
+    }
+
+
+    /**
+     * The flow of the application: a new account with a normal e-mail
+     * address, the password reset with a PIN code, posting a lost item,
+     * closing it and removing an account.
+     */
+    private static void testLostAndFoundFlow(AppServices services, ItemDao items, long userId) {
+        // --- 1. a new account with a normal e-mail address ----------------
+        String email = "backend.test.user234@gmail.com";
+        var registered = services.authService()
+                .register("Backend Test Student", email, "", "Passw0rd1", "Passw0rd1");
+        check("an account with a gmail address can be created", registered.isSuccess());
+        if (!registered.isSuccess()) {
+            return;
+        }
+        User student = registered.getData();
+        check("the student id was generated automatically",
+                student.getStudentId() != null && !student.getStudentId().isBlank());
+        check("the account is a student account", student.getRole() == Role.STUDENT);
+
+        // --- 2. the password reset with the PIN code ----------------------
+        var code = services.authService().requestPasswordReset(email);
+        check("a reset code is created", code.isSuccess());
+        check("the reset code has six digits",
+                code.getData() != null && code.getData().matches("\\d{6}"));
+
+        var wrong = services.authService().resetPassword(email, "000000", "NewPassw0rd");
+        check("a wrong code is refused", !wrong.isSuccess());
+
+        var reset = services.authService().resetPassword(email, code.getData(), "NewPassw0rd");
+        check("the password is changed with the code", reset.isSuccess());
+
+        var login = services.authService().login(email, "NewPassw0rd");
+        check("the new password works", login.isSuccess());
+        var oldLogin = services.authService().login(email, "Passw0rd1");
+        check("the old password does not work any more", !oldLogin.isSuccess());
+
+        // the code cannot be used twice
+        var second = services.authService().resetPassword(email, code.getData(), "Other12345");
+        check("the code cannot be used twice", !second.isSuccess());
+
+        // --- 3. posting a lost item --------------------------------------
+        var posted = services.postService().postLostItem(student, "BACKEND-TEST lost phone",
+                com.bubt.findit.core.model.ItemCategory.ELECTRONICS, "TestBrand", "Black",
+                "Written by the backend self-test", "Backend Test Hall", null);
+        check("the lost item is posted", posted.isSuccess());
+        long itemId = posted.getData() == null ? 0 : posted.getData();
+        check("the open board shows the post",
+                services.postService().openLostPosts(50).stream()
+                        .anyMatch(item -> item.getId() == itemId));
+
+        // --- 4. the owner confirms that the item was found ---------------
+        var confirmed = services.postService().confirmFound(student, itemId);
+        check("the owner can close the post", confirmed.isSuccess());
+        check("the closed post is not on the board any more",
+                services.postService().openLostPosts(50).stream()
+                        .noneMatch(item -> item.getId() == itemId));
+
+        // --- 5. the administrator removes the post -----------------------
+        User admin = users().findByEmail("admin@findit.edu").orElse(null);
+        if (admin == null) {
+            admin = users().findById(userId).orElse(null);
+        }
+        if (admin != null) {
+            var removed = services.postService().deletePost(admin, itemId);
+            check("the administrator can remove a post", removed.isSuccess());
+        }
+
+        // --- 6. the administrator removes the account --------------------
+        User office = users().findByEmail("admin@findit.edu").orElse(null);
+        if (office != null) {
+            var deleted = services.userService().deleteAccount(office, student.getId());
+            check("the administrator can delete an account", deleted.isSuccess());
+            check("the deleted account is gone",
+                    users().findByEmail(email).isEmpty());
+        }
+
+        // the students do not see the manager account
+        var visible = services.userService().visibleAccounts(student, 100);
+        check("the manager account is not in the list of a student",
+                visible.stream().noneMatch(u -> u.getRole() == Role.ADMIN));
+    }
+
+    private static UserDao users() {
+        return DaoFactory.userDao();
     }
 
     private static void check(String name, boolean condition) {
