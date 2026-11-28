@@ -13,6 +13,9 @@ import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.TopBar;
 import com.bubt.findit.ui.common.UiTheme;
 import com.bubt.findit.ui.dashboard.DashboardPanel;
+import com.bubt.findit.ui.posts.MyPostsPanel;
+import com.bubt.findit.ui.posts.PostLostItemPanel;
+import com.bubt.findit.ui.posts.PostManagementPanel;
 import com.bubt.findit.ui.reports.ReportPanel;
 import com.bubt.findit.ui.search.SearchResultsPanel;
 import com.bubt.findit.ui.users.AuditLogPanel;
@@ -166,10 +169,19 @@ public class MainFrame extends BaseFrame {
         addBrand();
         addNavButton("Dashboard", Icons.Glyph.DASHBOARD, "dashboard");
 
+        if (!user.isAdmin()) {
+            addSection("Lost and found");
+            addNavButton("Post a Lost Item", Icons.Glyph.PLUS, "post");
+            addNavButton("My Posts", Icons.Glyph.TAG, "my-posts");
+        }
+
         addSection("Account");
         addNavButton("My Profile", Icons.Glyph.KEY, "profile");
+
         if (user.isAdmin()) {
-            addNavButton("Manage Users", Icons.Glyph.USERS, "users");
+            addSection("Office");
+            addNavButton("Manage Accounts", Icons.Glyph.USERS, "users");
+            addNavButton("Manage Posts", Icons.Glyph.BOX, "manage-posts");
             addNavButton("Audit Log", Icons.Glyph.LIST, "audit");
         }
 
@@ -223,20 +235,29 @@ public class MainFrame extends BaseFrame {
     private void buildContent() {
         contentHolder.removeAll();
 
-        contentHolder.add(new DashboardPanel(services.dashboardService(), user), "dashboard");
+        contentHolder.add(new DashboardPanel(services, services.dashboardService(), user), "dashboard");
         contentHolder.add(new ProfilePanel(services, user), "profile");
         contentHolder.add(searchResults, "search");
         contentHolder.add(new ReportPanel(services.dashboardService(), services.reportService(),
                 services.auditDao(), user), "reports");
 
+        if (!user.isAdmin()) {
+            contentHolder.add(new PostLostItemPanel(services, user), "post");
+            contentHolder.add(new MyPostsPanel(services, user), "my-posts");
+        }
+
         if (user.isAdmin()) {
             contentHolder.add(new UserManagementPanel(services, user), "users");
+            contentHolder.add(new PostManagementPanel(services, user), "manage-posts");
             contentHolder.add(new AuditLogPanel(services, user), "audit");
         }
 
         cardTitles.put("dashboard", "Dashboard");
         cardTitles.put("profile", "My Profile");
-        cardTitles.put("users", "Manage Users");
+        cardTitles.put("post", "Post a Lost Item");
+        cardTitles.put("my-posts", "My Posts");
+        cardTitles.put("users", "Manage Accounts");
+        cardTitles.put("manage-posts", "Manage Posts");
         cardTitles.put("audit", "Audit Log");
         cardTitles.put("search", "Search Results");
         cardTitles.put("reports", "Reports");

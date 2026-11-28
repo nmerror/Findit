@@ -4,13 +4,7 @@ import com.bubt.findit.app.AppServices;
 import com.bubt.findit.core.model.OperationResult;
 import com.bubt.findit.core.model.Session;
 import com.bubt.findit.ui.MainFrame;
-import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.BaseFrame;
-import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.ModernPasswordField;
-import com.bubt.findit.ui.common.ModernTextField;
-import com.bubt.findit.ui.common.RoundedPanel;
-import com.bubt.findit.ui.common.UiTheme;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -19,33 +13,29 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 
 /**
- * The login screen: one form in the middle of the window.
+ * The login screen - the entrance of the application.
  *
- * <p>The identifier accepts either the e-mail address or the student ID. When
- * the credentials are correct the main window opens, otherwise the message
- * under the fields explains what went wrong.
+ * <p>Black, white and grey: a dark window with one form in the middle. The
+ * identifier accepts the e-mail address (for example {@code user234@gmail.com})
+ * or the student ID. The link below the button opens the registration, the
+ * second link the password reset.
  */
 public class LoginFrame extends BaseFrame {
 
     private final AppServices services;
-    private final ModernTextField identifierField = new ModernTextField("e-mail address or student ID");
-    private final ModernPasswordField passwordField = new ModernPasswordField("password");
+    private final AuthTextField identifierField = new AuthTextField("e-mail address or student ID");
+    private final AuthPasswordField passwordField = new AuthPasswordField("password");
     private final JLabel messageLabel = new JLabel(" ");
 
     public LoginFrame(AppServices services) {
-        super(services.config().appName(), "Campus Lost & Found Management System", 880, 560);
+        super(services.config().appName(), "Campus Lost & Found Management System", 900, 580);
         this.services = services;
 
-        buildScreen();
-    }
-
-    private void buildScreen() {
-        getContent().removeAll();
-        getContent().setBackground(UiTheme.WINDOW);
+        getContent().setBackground(AuthColors.BACKGROUND);
         getContent().add(buildFormArea(), BorderLayout.CENTER);
-        getContent().add(buildFooter(), BorderLayout.SOUTH);
         getContent().revalidate();
         getContent().repaint();
     }
@@ -54,89 +44,78 @@ public class LoginFrame extends BaseFrame {
 
     private JPanel buildFormArea() {
         JPanel area = new JPanel(new java.awt.GridBagLayout());
-        area.setBackground(UiTheme.WINDOW);
+        area.setBackground(AuthColors.BACKGROUND);
 
-        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
+        JPanel card = new JPanel();
+        card.setBackground(AuthColors.CARD);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-        card.setBorder(javax.swing.BorderFactory.createEmptyBorder(30, 34, 26, 34));
-        card.setPreferredSize(new Dimension(400, 378));
+        card.setBorder(javax.swing.BorderFactory.createEmptyBorder(34, 36, 30, 36));
+        card.setPreferredSize(new Dimension(400, 430));
 
         JLabel brand = new JLabel(services.config().appName());
-        brand.setFont(Fonts.display(24));
-        brand.setForeground(UiTheme.TEXT);
+        brand.setFont(new Font(Font.SANS_SERIF, Font.BOLD, 30));
+        brand.setForeground(AuthColors.TEXT);
         brand.setAlignmentX(LEFT_ALIGNMENT);
 
         JLabel sub = new JLabel("Campus Lost & Found Management System");
-        sub.setFont(Fonts.body(12));
-        sub.setForeground(UiTheme.TEXT_MUTE);
+        sub.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 13));
+        sub.setForeground(AuthColors.TEXT_MUTE);
         sub.setAlignmentX(LEFT_ALIGNMENT);
 
         card.add(brand);
-        card.add(Box.createVerticalStrut(4));
+        card.add(Box.createVerticalStrut(6));
         card.add(sub);
-        card.add(Box.createVerticalStrut(22));
+        card.add(Box.createVerticalStrut(26));
 
         card.add(label("E-mail or Student ID"));
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(7));
         card.add(fullWidth(identifierField));
-        card.add(Box.createVerticalStrut(14));
+        card.add(Box.createVerticalStrut(15));
 
         card.add(label("Password"));
-        card.add(Box.createVerticalStrut(6));
+        card.add(Box.createVerticalStrut(7));
         card.add(fullWidth(passwordField));
         card.add(Box.createVerticalStrut(8));
 
-        messageLabel.setFont(Fonts.body(12));
-        messageLabel.setForeground(UiTheme.ROSE);
+        messageLabel.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        messageLabel.setForeground(AuthColors.ERROR);
         messageLabel.setAlignmentX(LEFT_ALIGNMENT);
         card.add(messageLabel);
-        card.add(Box.createVerticalStrut(8));
+        card.add(Box.createVerticalStrut(6));
 
-        AppButton signIn = new AppButton("Sign in", AppButton.Kind.PRIMARY);
+        AuthButton signIn = new AuthButton("Sign in", AuthButton.Kind.PRIMARY);
         signIn.setAlignmentX(LEFT_ALIGNMENT);
-        signIn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        signIn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         signIn.addActionListener(event -> performLogin());
         card.add(signIn);
-        card.add(Box.createVerticalStrut(14));
+        card.add(Box.createVerticalStrut(16));
 
-        JLabel registerLink = linkLabel("Create a new student account", this::openRegisterFrame);
-        card.add(registerLink);
+        card.add(linkLabel("Create a new account", this::openRegisterFrame));
+        card.add(Box.createVerticalStrut(6));
+        card.add(linkLabel("Forgot your password?", this::openResetFrame));
 
         area.add(card);
         return area;
     }
 
-    private JPanel buildFooter() {
-        JPanel footer = new JPanel();
-        footer.setOpaque(false);
-        footer.setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 0, 18, 0));
-
-        JLabel note = new JLabel("BUBT  ·  Advanced Programming Lab (CSE 342)  ·  Swing + MySQL (JDBC)");
-        note.setFont(Fonts.caption(11));
-        note.setForeground(UiTheme.TEXT_MUTE);
-        note.setHorizontalAlignment(JLabel.CENTER);
-        footer.add(note);
-        return footer;
-    }
-
     private JLabel label(String text) {
         JLabel label = new JLabel(text);
-        label.setFont(Fonts.medium(12));
-        label.setForeground(UiTheme.TEXT_DIM);
+        label.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        label.setForeground(AuthColors.TEXT_DIM);
         label.setAlignmentX(LEFT_ALIGNMENT);
         return label;
     }
 
     private JComponent fullWidth(JComponent component) {
         component.setAlignmentX(LEFT_ALIGNMENT);
-        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        component.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         return component;
     }
 
     private JLabel linkLabel(String text, Runnable action) {
         JLabel link = new JLabel(text);
-        link.setFont(Fonts.medium(12));
-        link.setForeground(UiTheme.ACCENT);
+        link.setFont(new Font(Font.SANS_SERIF, Font.PLAIN, 12));
+        link.setForeground(AuthColors.ACCENT);
         link.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.HAND_CURSOR));
         link.setAlignmentX(LEFT_ALIGNMENT);
         link.addMouseListener(new java.awt.event.MouseAdapter() {
@@ -148,6 +127,8 @@ public class LoginFrame extends BaseFrame {
         return link;
     }
 
+    // ------------------------------------------------------------- actions
+
     private void performLogin() {
         String identifier = identifierField.getText();
         String password = new String(passwordField.getPassword());
@@ -157,7 +138,7 @@ public class LoginFrame extends BaseFrame {
             dispose();
             new MainFrame(services).setVisible(true);
         } else {
-            messageLabel.setForeground(UiTheme.ROSE);
+            messageLabel.setForeground(AuthColors.ERROR);
             messageLabel.setText(result.getMessage());
             passwordField.setText("");
         }
@@ -165,5 +146,9 @@ public class LoginFrame extends BaseFrame {
 
     private void openRegisterFrame() {
         new RegisterFrame(services).setVisible(true);
+    }
+
+    private void openResetFrame() {
+        new ForgotPasswordFrame(services).setVisible(true);
     }
 }
