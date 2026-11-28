@@ -13,6 +13,8 @@ import com.bubt.findit.core.registry.ServiceRegistry;
 import com.bubt.findit.core.spi.NotificationService;
 import com.bubt.findit.core.util.PasswordHasher;
 import com.bubt.findit.core.util.Validation;
+import com.bubt.findit.db.dao.InMemoryPasswordResetDao;
+import com.bubt.findit.db.dao.PasswordResetDao;
 import com.bubt.findit.db.dao.UserDao;
 
 import java.time.LocalDateTime;
@@ -48,11 +50,18 @@ public class AuthService {
     private final UserDao userDao;
     private final SessionManager sessionManager;
     private final EventBus eventBus;
+    private final PasswordResetDao resetDao;
 
     public AuthService(UserDao userDao, SessionManager sessionManager, EventBus eventBus) {
+        this(userDao, sessionManager, eventBus, new InMemoryPasswordResetDao());
+    }
+
+    public AuthService(UserDao userDao, SessionManager sessionManager, EventBus eventBus,
+                       PasswordResetDao resetDao) {
         this.userDao = userDao;
         this.sessionManager = sessionManager;
         this.eventBus = eventBus;
+        this.resetDao = resetDao;
     }
 
     /**
@@ -69,9 +78,15 @@ public class AuthService {
         if (!Validation.isValidEmail(email)) {
             return OperationResult.fail(ERR_INVALID_EMAIL, "Enter a valid e-mail address.");
         }
-        if (!Validation.isValidStudentId(studentId)) {
+        // The student ID is optional: a new user can register with only an
+        // e-mail address. When it is empty, one is generated.
+        String cleanStudentId = studentId == null ? "" : studentId.trim();
+        if (!cleanStudentId.isEmpty() && !Validation.isValidStudentId(cleanStudentId)) {
             return OperationResult.fail(ERR_INVALID_STUDENT_ID,
                     "Student ID must be 4-20 letters or digits (for example 21-04234).");
+        }
+        if (cleanStudentId.isEmpty()) {
+            cleanStudentId = generateStudentId();
         }
         if (!Validation.isStrongPassword(password)) {
             return OperationResult.fail(ERR_WEAK_PASSWORD,
@@ -84,12 +99,12 @@ public class AuthService {
         if (userDao.existsByEmail(normalizedEmail)) {
             return OperationResult.fail(ERR_EMAIL_EXISTS, "That e-mail address is already registered.");
         }
-        if (userDao.findByStudentId(studentId.trim()).isPresent()) {
+        if (userDao.findByStudentId(cleanStudentId).isPresent()) {
             return OperationResult.fail(ERR_STUDENT_ID_EXISTS, "That student ID is already registered.");
         }
 
         PasswordHasher.HashedPassword hashed = PasswordHasher.hash(password.toCharArray());
-        User user = User.create(name, normalizedEmail, studentId.trim(),
+        User user = User.create(name, normalizedEmail, cleanStudentId,
                 hashed.getHash(), hashed.getSalt(), Role.STUDENT);
         user.setStatus(UserStatus.ACTIVE);
         user.setCreatedAt(LocalDateTime.now());
@@ -161,6 +176,84 @@ public class AuthService {
                 .actor(AuthContext.currentUserId())
                 .build());
         AuthContext.clear();
+    }
+
+    /**
+     * Starts the "forgot password" flow: a six digit PIN code is generated for
+     * the account and stays valid for ten minutes.
+     *
+     * <p>FindIt has no mail server, so the PIN is handed back to the screen
+     * and printed into the console - in a real deployment this is where the
+     * e-mail with the code would go.
+     *
+     * @return the PIN code, or an error
+     */
+    public OperationResult<String> requestPasswordReset(String email) {
+        if (!Validation.isValidEmail(email)) {
+            return OperationResult.fail(ERR_INVALID_EMAIL, "Enter the e-mail address of your account.");
+        }
+        User user = userDao.findByEmail(email.trim().toLowerCase()).orElse(null);
+        if (user == null) {
+            // The same answer as for an unknown address - the screen must not
+            // tell a stranger which addresses are registered.
+            return OperationResult.fail(ERR_NOT_FOUND, "No account uses that e-mail address.");
+        }
+        if (user.getStatus() == UserStatus.SUSPENDED) {
+            return OperationResult.fail(ERR_ACCOUNT_SUSPENDED,
+                    "This account is suspended. Please contact the administrator.");
+        }
+        String pin = generatePin();
+        resetDao.deleteAllOf(user.getId());
+        resetDao.create(user.getId(), pin, LocalDateTime.now().plusMinutes(10));
+        audit(user.getId(), "PASSWORD_RESET_REQUESTED", "A reset code was created for " + user.getEmail());
+        System.out.println("[FindIt] reset code for " + user.getEmail() + " : " + pin);
+        return OperationResult.ok(pin, "Your reset code is valid for 10 minutes.");
+    }
+
+    /**
+     * Sets a new password with the PIN code of the "forgot password" flow.
+     */
+    public OperationResult<User> resetPassword(String email, String pin, String newPassword) {
+        if (!Validation.isValidEmail(email)) {
+            return OperationResult.fail(ERR_INVALID_EMAIL, "Enter the e-mail address of your account.");
+        }
+        if (pin == null || !pin.trim().matches("\\d{6}")) {
+            return OperationResult.fail("INVALID_PIN", "The code has six digits.");
+        }
+        if (!Validation.isStrongPassword(newPassword)) {
+            return OperationResult.fail(ERR_WEAK_PASSWORD,
+                    "New password needs at least 8 characters, a letter and a digit.");
+        }
+        User user = userDao.findByEmail(email.trim().toLowerCase()).orElse(null);
+        if (user == null) {
+            return OperationResult.fail(ERR_NOT_FOUND, "No account uses that e-mail address.");
+        }
+        if (!resetDao.isValid(user.getId(), pin.trim(), LocalDateTime.now())) {
+            return OperationResult.fail("INVALID_PIN", "That code is wrong or has expired.");
+        }
+        PasswordHasher.HashedPassword hashed = PasswordHasher.hash(newPassword.toCharArray());
+        userDao.updatePassword(user.getId(), hashed.getHash(), hashed.getSalt());
+        resetDao.markUsed(user.getId(), pin.trim());
+        resetDao.deleteAllOf(user.getId());
+        audit(user.getId(), "PASSWORD_RESET", "The password was reset with a code");
+        eventBus.publish(AppEvent.of(Events.PASSWORD_CHANGED).actor(user.getId()).build());
+        return OperationResult.ok(user.sanitized(), "Your new password is saved. You can log in now.");
+    }
+
+    /** A number for the users who register without a student ID. */
+    private String generateStudentId() {
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        return "U" + (100000 + random.nextInt(900000));
+    }
+
+    /** Six random digits - the code of the password reset. */
+    private String generatePin() {
+        java.security.SecureRandom random = new java.security.SecureRandom();
+        StringBuilder code = new StringBuilder(6);
+        for (int i = 0; i < 6; i++) {
+            code.append(random.nextInt(10));
+        }
+        return code.toString();
     }
 
     public OperationResult<User> changePassword(long userId, String oldPassword, String newPassword) {
