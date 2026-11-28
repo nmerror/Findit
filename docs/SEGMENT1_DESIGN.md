@@ -61,28 +61,29 @@ A service never imports a Swing class, so it can be tested without a display
 
 ### `ui` — the presentation layer
 
-The GUI is **entirely custom-painted**. No default Swing widget is visible, so
-the look is identical on every machine and nobody can "accidentally" drop a
-Metal/L&F button into the middle of a card.
+The GUI uses **one light theme and flat surfaces**. The standard Swing widgets
+(table, scroll bar, tool tip) use the **Nimbus** look-and-feel with the
+colours of `UiTheme`; the cards, buttons and charts are painted by hand. No
+gradients, no glows, no custom title bar - the window keeps the decorations of
+the operating system.
 
 | Class | Responsibility |
 |---|---|
 | `UiTheme` | The design tokens: every colour, corner radius, spacing value and font size. |
-| `Fonts` | Picks the best installed modern typeface, falls back to the logical font. |
-| `BaseFrame` | Undecorated window + custom title bar (app mark, title, window buttons, drag). |
-| `RoundedPanel` | Card primitive: rounded corners, gradient fill, hairline border, optional glow. |
-| `GlowButton` | PRIMARY / GHOST / DANGER buttons, gradient fill, hover glow, pressed state. |
-| `ModernTextField` / `ModernPasswordField` | Rounded dark inputs with a luminous focus ring and a placeholder. |
+| `Fonts` | Uses the system interface font, falls back to the Java logical font. |
+| `BaseFrame` | Base class of every window: title, size, the panel for the content. |
+| `RoundedPanel` | Card primitive: rounded corners, flat fill, hairline border. |
+| `AppButton` | PRIMARY / SECONDARY / DANGER / SUBTLE buttons with a hover state. |
+| `ModernTextField` / `ModernPasswordField` | Flat inputs with an accent focus border and a placeholder. |
 | `NavButton` | Sidebar entry: vector glyph, label, hover tint, accent bar when active. |
 | `TopBar` | Page header: title, live clock, search field, signed-in user. |
 | `StatCard` | KPI card: caption, big number, supporting line, glyph badge. |
-| `DonutChart` / `BarList` | Charts drawn with Graphics2D — no charting dependency. |
+| `StackedBar` / `BarList` | Charts drawn with Graphics2D — no charting dependency. |
 | `StatusBadge` / `StatusTableRenderer` | Coloured status pills, also inside table cells. |
-| `ModernTable` | Dark tables: no grid lines, striped rows, styled header, fixed column widths. |
+| `ModernTable` | Light tables: soft stripes, styled header, fixed column widths. |
 | `Icons` | 14 vector glyphs drawn in code — the project ships **no image files**. |
-| `GradientBackdrop` | The glowing gradient behind the login hero. |
 | `StretchPanel` | Makes a panel fill the width of its scroll pane (kills stray scrollbars). |
-| `MainFrame` | Window shell: role-filtered sidebar + card layout. |
+| `MainFrame` | Window shell: role-filtered sidebar + card layout + `addSegmentSection(...)`. |
 
 **Rule for the other segments:** build your screens with these components.
 Do not introduce new colours, new radii or new fonts — if something is missing,
@@ -111,6 +112,7 @@ producing one product instead of four products.
 
 ```
 LoginFrame.performLogin()
+ForgotPasswordFrame — the 6-digit PIN reset (two steps: e-mail, then PIN + new password)
   → AuthService.login(identifier, password)
       → UserDao.findByEmail(email)  or  findByStudentId(id)
       → PasswordHasher.verify(password, salt, hash)     ← constant time
@@ -130,6 +132,7 @@ to ask "who is this?" with one line.
 
 ```
 DashboardPanel.refresh()
+PostService.postLostItem / confirmFound / deletePost — the three rules of the lost-and-found flow
   → DashboardService.build(viewer)
       → UserDao counts                       (Segment 1 data)
       → ServiceRegistry.get(ItemCatalogService)   → counts, recent items, locations
@@ -148,7 +151,7 @@ Segment 1's code**. That is the whole point.
 ### 3.3 Suspending a student
 
 ```
-UserManagementPanel (admin only)
+UserManagementPanel (admin only) — with the delete-account button
   → UserService.suspend(admin, userId)
       → rbac.require(admin, Permission.MANAGE_USERS)   ← refused if not allowed
       → refuse to suspend yourself

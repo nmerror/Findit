@@ -26,21 +26,15 @@ public class AppConfig {
     private final String dbPassword;
     private final String dbDriver;
     private final int sessionTimeoutMinutes;
-    private final String theme;
     private final int dbPoolSize;
 
     public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
                      String dbPassword, String dbDriver, int sessionTimeoutMinutes) {
-        this(appName, mysqlMode, dbUrl, dbUser, dbPassword, dbDriver, sessionTimeoutMinutes, "dark");
+        this(appName, mysqlMode, dbUrl, dbUser, dbPassword, dbDriver, sessionTimeoutMinutes, 8);
     }
 
     public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
-                     String dbPassword, String dbDriver, int sessionTimeoutMinutes, String theme) {
-        this(appName, mysqlMode, dbUrl, dbUser, dbPassword, dbDriver, sessionTimeoutMinutes, theme, 8);
-    }
-
-    public AppConfig(String appName, boolean mysqlMode, String dbUrl, String dbUser,
-                     String dbPassword, String dbDriver, int sessionTimeoutMinutes, String theme,
+                     String dbPassword, String dbDriver, int sessionTimeoutMinutes,
                      int dbPoolSize) {
         this.appName = appName;
         this.mysqlMode = mysqlMode;
@@ -49,7 +43,6 @@ public class AppConfig {
         this.dbPassword = dbPassword;
         this.dbDriver = dbDriver;
         this.sessionTimeoutMinutes = sessionTimeoutMinutes;
-        this.theme = theme == null ? "dark" : theme;
         this.dbPoolSize = dbPoolSize < 1 ? 1 : dbPoolSize;
     }
 
@@ -83,13 +76,12 @@ public class AppConfig {
                 props.getProperty("db.password", ""),
                 props.getProperty("db.driver", "com.mysql.cj.jdbc.Driver"),
                 Integer.parseInt(props.getProperty("session.timeout.minutes", "60")),
-                props.getProperty("app.theme", "dark"),
                 Integer.parseInt(props.getProperty("db.pool.size", "8")));
     }
 
     /** In-memory configuration - no MySQL server needed. */
     public static AppConfig memory() {
-        return new AppConfig("FindIt", false, "", "", "", "", 60, "dark", 4);
+        return new AppConfig("FindIt", false, "", "", "", "", 60, 4);
     }
 
     public String appName() {
@@ -120,38 +112,9 @@ public class AppConfig {
         return sessionTimeoutMinutes;
     }
 
-    /** "dark" or "light" - the palette the application starts in. */
-    public String theme() {
-        return theme;
-    }
-
     /** How many JDBC connections the pool keeps open (see db.pool.size). */
     public int dbPoolSize() {
         return dbPoolSize;
     }
 
-    /**
-     * Remembers the chosen palette in app.properties. Silently does nothing
-     * when the file cannot be written (for example on a read-only checkout).
-     */
-    public void saveTheme(String value) {
-        Path file = Path.of("app.properties");
-        try {
-            if (Files.exists(file)) {
-                String content = Files.readString(file);
-                java.util.regex.Pattern pattern =
-                        java.util.regex.Pattern.compile("(?m)^app\\.theme\\s*=.*$");
-                if (pattern.matcher(content).find()) {
-                    content = pattern.matcher(content).replaceFirst(
-                            java.util.regex.Matcher.quoteReplacement("app.theme = " + value));
-                } else {
-                    content = content + System.lineSeparator() + "app.theme = " + value
-                            + System.lineSeparator();
-                }
-                Files.writeString(file, content);
-            }
-        } catch (IOException | java.util.regex.PatternSyntaxException ignored) {
-            // Not being able to remember the theme is not a failure.
-        }
-    }
 }

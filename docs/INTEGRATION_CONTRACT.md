@@ -24,8 +24,25 @@ say so in the team group chat on the same day.
 | "Is this user an admin?" | `user.isAdmin()` | Comparing role strings |
 | "Write a log entry" | `AuditService.record(action, actorId, details)` | Writing your own log table |
 | "Tell the user something" | `NotificationService.notifyUser(id, title, text)` | Printing to the console |
-| "Show a nice screen" | `UiTheme` colours, fonts, `UiTheme.card()` | Inventing new colours per screen |
-| "Put a panel in the navigation" | One line in `MainFrame.buildNavigation()` | Opening a new JFrame from your code |
+| "Show a nice screen" | `UiTheme` colours, fonts, `RoundedPanel`, `AppButton`, `ModernTable` | Inventing new colours per screen |
+| "Put a panel in the navigation" | `mainFrame.addSegmentSection(section, item, cardName, panel)` | Opening a new JFrame from your code |
+
+### How to add your screen to the window
+
+Segment 1 does **not** show empty placeholder screens — the navigation only
+lists the screens that really exist. When your screen is ready, add it with
+one call:
+
+```java
+mainFrame.addSegmentSection(
+        "Segment 2 - Reporting",   // the heading of the group in the sidebar
+        "Report an Item",          // the label of the entry
+        "s2-report",               // an internal name, use it for navigation
+        new ReportItemPanel(services));
+```
+
+The window creates the entry in the sidebar, registers the panel, keeps track
+of the title of the screen and refreshes the header. Nothing else is needed.
 
 ---
 
@@ -54,7 +71,7 @@ ServiceRegistry.register(ItemCatalogService.class, new ItemCatalogServiceImpl())
 - [ ] `items.reported_by` → `users.user_id` (foreign key, never a free-text name)
 - [ ] Your service returns empty lists / zeros instead of `null`
 - [ ] `isAvailable()` returns `true` in the real implementation
-- [ ] Your screen replaces the `PlaceholderPanel` in `MainFrame.buildContent()`
+- [ ] Your screen is added with `mainFrame.addSegmentSection(...)` — nothing else
 - [ ] You call `rbac.require(user, Permission.REPORT_ITEM)` before saving an item
 
 ---
@@ -107,8 +124,8 @@ int countAwaitingReturnHandover();
 **Your tables:** you may update `claims` (status) and insert into `audit_log`.
 You must not touch `users` except through `UserService` (suspend / restore).
 
-**Your screens:** "Verify Claims", "Return Management" — both already exist as
-placeholders in the navigation and are visible to admins only.
+**Your screens:** "Verify Claims", "Return Management" — add them with
+`mainFrame.addSegmentSection(...)`; both are visible to admins only.
 
 **Register it:**
 

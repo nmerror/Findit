@@ -25,7 +25,7 @@ public class ModernTextField extends JTextField {
         setForeground(UiTheme.TEXT);
         setCaretColor(UiTheme.ACCENT);
         setSelectionColor(UiTheme.alpha(UiTheme.ACCENT, 90));
-        setSelectedTextColor(UiTheme.WINDOW_DEEP);
+        setSelectedTextColor(UiTheme.TEXT);
         setFont(Fonts.body(13));
         setBorder(javax.swing.BorderFactory.createEmptyBorder(0, 12, 0, 12));
         setPreferredSize(new java.awt.Dimension(280, 44));
@@ -84,12 +84,27 @@ public class ModernTextField extends JTextField {
     }
 
     @Override
+    public void updateUI() {
+        super.updateUI();
+        // The editor of Swing is opaque by default and would paint its own
+        // background over the placeholder.
+        for (java.awt.Component child : getComponents()) {
+            if (child instanceof javax.swing.text.JTextComponent editor) {
+                editor.setOpaque(false);
+            }
+        }
+    }
+
+    @Override
     protected void paintComponent(Graphics g) {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        FieldSkin.paint(g2, getWidth(), getHeight(), hasFocus(), hover, placeholder, accent,
-                getText() == null || getText().isEmpty());
+        FieldSkin.paint(g2, getWidth(), getHeight(), hasFocus(), hover, accent);
         g2.dispose();
+
         super.paintComponent(g);
+
+        FieldSkin.paintPlaceholder(g, getWidth(), getHeight(), placeholder,
+                getText() == null || getText().isEmpty());
     }
 }

@@ -74,7 +74,7 @@ public class NavButton extends JButton {
             g2.setColor(UiTheme.ACCENT);
             g2.fillRoundRect(0, 5, 3, h - 10, 3, 3);
         } else if (hover) {
-            g2.setColor(UiTheme.alpha(UiTheme.SURFACE_2, 170));
+            g2.setColor(UiTheme.SURFACE_2);
             g2.fillRoundRect(0, 0, w, h, UiTheme.R_SM, UiTheme.R_SM);
         }
 

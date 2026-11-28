@@ -49,9 +49,18 @@ public class StatCard extends RoundedPanel {
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        // The text must not decide how wide the card is - the card has to fit
+        // into a narrow window as well. The labels are stretched over the
+        // whole card and keep their text in the middle.
+        this.value.setMinimumSize(new Dimension(0, this.value.getPreferredSize().height));
+        this.value.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        this.value.setHorizontalAlignment(JLabel.CENTER);
         this.value.setAlignmentX(0.5f);
         body.add(this.value);
         body.add(Box.createVerticalStrut(2));
+        detail.setMinimumSize(new Dimension(0, detail.getPreferredSize().height));
+        detail.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        detail.setHorizontalAlignment(JLabel.CENTER);
         detail.setAlignmentX(0.5f);
         body.add(detail);
 
@@ -75,7 +84,7 @@ public class StatCard extends RoundedPanel {
     }
 
     public void setAccent(Color accent) {
-        value.setForeground(UiTheme.mix(accent, Color.WHITE, 0.25));
+        value.setForeground(UiTheme.darken(accent, 0.78f));
     }
 
     /** A circular badge that holds one vector glyph. */

@@ -38,6 +38,14 @@ public interface UserDao {
 
     List<User> findAll(int limit, int offset);
 
+    /**
+     * The accounts of one role.
+     *
+     * <p>The students only see the student accounts - the manager account is
+     * an internal thing of the office and does not appear in their view.
+     */
+    List<User> findByRole(Role role, int limit);
+
     long countAll();
 
     long countByRole(Role role);

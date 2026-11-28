@@ -7,7 +7,7 @@ import com.bubt.findit.db.dao.AuditEntry;
 import com.bubt.findit.service.DashboardService;
 import com.bubt.findit.service.ReportService;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GlowButton;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.UiTheme;
 
@@ -52,18 +52,18 @@ public class ReportPanel extends JPanel {
         setBackground(UiTheme.WINDOW);
         setBorder(BorderFactory.createEmptyBorder(4, 26, 22, 26));
 
-        JLabel heading = new JLabel("Reports");
-        heading.setFont(Fonts.display(24));
+        JLabel heading = new JLabel("System summary");
+        heading.setFont(Fonts.heading(15));
         heading.setForeground(UiTheme.TEXT);
 
-        JLabel subtitle = new JLabel("Summary of the whole system - refresh it before every demo.");
+        JLabel subtitle = new JLabel("Refresh it before every demo.");
         subtitle.setFont(Fonts.caption(12));
         subtitle.setForeground(UiTheme.TEXT_MUTE);
 
-        JPanel head = new JPanel(new BorderLayout(0, 3));
+        JPanel head = new JPanel(new BorderLayout(12, 0));
         head.setOpaque(false);
-        head.add(heading, BorderLayout.NORTH);
-        head.add(subtitle, BorderLayout.SOUTH);
+        head.add(heading, BorderLayout.WEST);
+        head.add(subtitle, BorderLayout.CENTER);
 
         area.setEditable(false);
         area.setFont(Fonts.mono(12));
@@ -79,13 +79,13 @@ public class ReportPanel extends JPanel {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         toolbar.setOpaque(false);
 
-        GlowButton refresh = new GlowButton("Refresh", GlowButton.Kind.PRIMARY);
+        AppButton refresh = new AppButton("Refresh", AppButton.Kind.PRIMARY);
         refresh.addActionListener(event -> refresh());
 
-        GlowButton exportText = new GlowButton("Export as .txt", GlowButton.Kind.GHOST);
+        AppButton exportText = new AppButton("Export as .txt", AppButton.Kind.SECONDARY);
         exportText.addActionListener(event -> export("txt"));
 
-        GlowButton exportCsv = new GlowButton("Export as .csv", GlowButton.Kind.GHOST);
+        AppButton exportCsv = new AppButton("Export as .csv", AppButton.Kind.SECONDARY);
         exportCsv.addActionListener(event -> export("csv"));
 
         toolbar.add(refresh);

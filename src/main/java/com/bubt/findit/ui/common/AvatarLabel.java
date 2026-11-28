@@ -30,11 +30,10 @@ public class AvatarLabel extends JComponent {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
         int d = Math.min(getWidth(), getHeight());
-        g2.setPaint(new java.awt.GradientPaint(0, 0, UiTheme.mix(accent, Color.WHITE, 0.25),
-                d, d, UiTheme.mix(accent, UiTheme.ON_ACCENT, 0.30)));
+        g2.setColor(accent);
         g2.fill(new Ellipse2D.Float(0, 0, d, d));
 
-        g2.setColor(UiTheme.alpha(Color.WHITE, 60));
+        g2.setColor(UiTheme.alpha(Color.WHITE, 90));
         g2.setStroke(new java.awt.BasicStroke(1f));
         g2.draw(new Ellipse2D.Float(0.5f, 0.5f, d - 1f, d - 1f));
 

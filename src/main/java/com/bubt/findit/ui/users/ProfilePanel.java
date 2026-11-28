@@ -6,7 +6,7 @@ import com.bubt.findit.core.model.User;
 import com.bubt.findit.db.dao.AuditEntry;
 import com.bubt.findit.ui.common.AvatarLabel;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GlowButton;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.ModernPasswordField;
 import com.bubt.findit.ui.common.ModernTextField;
 import com.bubt.findit.ui.common.RoundedPanel;
@@ -212,7 +212,7 @@ public class ProfilePanel extends JPanel {
         card.add(fullWidth(phoneField));
         card.add(Box.createVerticalStrut(10));
 
-        GlowButton save = new GlowButton("Save phone number", GlowButton.Kind.GHOST);
+        AppButton save = new AppButton("Save phone number", AppButton.Kind.SECONDARY);
         save.setAlignmentX(LEFT_ALIGNMENT);
         save.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
         save.addActionListener(event -> savePhone());
@@ -227,7 +227,7 @@ public class ProfilePanel extends JPanel {
         card.add(fullWidth(newPassword));
         card.add(Box.createVerticalStrut(10));
 
-        GlowButton change = new GlowButton("Update password", GlowButton.Kind.PRIMARY);
+        AppButton change = new AppButton("Update password", AppButton.Kind.PRIMARY);
         change.setAlignmentX(LEFT_ALIGNMENT);
         change.setMaximumSize(new Dimension(Integer.MAX_VALUE, 46));
         change.addActionListener(event -> changePassword());

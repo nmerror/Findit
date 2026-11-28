@@ -19,6 +19,7 @@ import com.bubt.findit.db.dao.UserDao;
 import com.bubt.findit.service.AuditServiceImpl;
 import com.bubt.findit.service.AuthService;
 import com.bubt.findit.service.DashboardService;
+import com.bubt.findit.service.PostService;
 import com.bubt.findit.service.RbacService;
 import com.bubt.findit.service.ReportService;
 import com.bubt.findit.service.SearchService;
@@ -57,6 +58,7 @@ public class AppServices {
     private final DashboardService dashboardService;
     private final SearchService searchService;
     private final ReportService reportService;
+    private final PostService postService;
 
     public AppServices(AppConfig config) {
         this.config = config;
@@ -68,12 +70,14 @@ public class AppServices {
         this.matchDao = DaoFactory.matchDao();
         this.sessionManager = new SessionManager(Duration.ofMinutes(config.sessionTimeoutMinutes()));
         this.rbacService = new RbacService();
-        this.authService = new AuthService(userDao, sessionManager, eventBus);
+        this.authService = new AuthService(userDao, sessionManager, eventBus,
+                DaoFactory.passwordResetDao());
         this.userService = new UserService(userDao, rbacService, eventBus, auditDao);
         this.dashboardService = new DashboardService(userDao);
         this.searchService = new SearchService(userDao);
         this.reportService = new ReportService(
                 ServiceRegistry.getOrDefault(AuditService.class, new AuditServiceImpl(auditDao)));
+        this.postService = new PostService(itemDao);
 
         // Stubs first, so the application always runs. Teammates replace them
         // with their real implementations when they are ready.
@@ -92,8 +96,13 @@ public class AppServices {
      * stubs (or the demo data) stay in place.
      */
     private void registerDatabaseBackedServices() {
-        if (itemDao != null && claimDao != null && matchDao != null) {
+        // The items are read in every mode - in memory mode from the
+        // in-memory DAO, with MySQL from the real tables.
+        if (itemDao != null) {
             ServiceRegistry.register(ItemCatalogService.class, new ItemCatalogServiceImpl(itemDao));
+        }
+        // The claims and the matches only exist with a real database.
+        if (itemDao != null && claimDao != null && matchDao != null) {
             ServiceRegistry.register(ClaimQueryService.class, new ClaimQueryServiceImpl(claimDao));
             ServiceRegistry.register(MatchQueryService.class, new MatchQueryServiceImpl(matchDao));
             ServiceRegistry.register(AdminWorkloadService.class,
@@ -166,5 +175,10 @@ public class AppServices {
 
     public ReportService reportService() {
         return reportService;
+    }
+
+    /** The service of the lost-and-found flow: post, close, remove. */
+    public PostService postService() {
+        return postService;
     }
 }

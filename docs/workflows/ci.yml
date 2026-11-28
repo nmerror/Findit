@@ -1,0 +1,114 @@
+name: Build & Test
+
+# Every push and every pull request compiles the project, runs the unit tests
+# and runs the database tests against a real MySQL server. The green tick on
+# the pull request is the proof that the code works.
+
+on:
+  push:
+    branches: [main, "feature/**", "chore/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Compile and test
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: findit123
+          MYSQL_DATABASE: findit
+        ports:
+          - "3306:3306"
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pfindit123"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install the tools for the screenshots
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxext6 libxrender1 xvfb
+
+      - name: Download the MySQL driver
+        run: |
+          mkdir -p lib
+          curl -sSL -o lib/mysql-connector-j-8.4.0.jar \
+            https://repo1.maven.org/maven2/com/mysql/mysql-connector-j/8.4.0/mysql-connector-j-8.4.0.jar
+
+      - name: Load the schema and the seed data
+        run: |
+          mysql -h 127.0.0.1 -uroot -pfindit123 < sql/01_schema.sql
+          mysql -h 127.0.0.1 -uroot -pfindit123 < sql/02_seed_data.sql
+
+      - name: Point the application at the test database
+        run: |
+          cat > app.properties <<'EOF'
+          app.name = FindIt
+          app.mode = mysql
+          db.url = jdbc:mysql://127.0.0.1:3306/findit?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+          db.user = root
+          db.password = findit123
+          db.driver = com.mysql.cj.jdbc.Driver
+          session.timeout.minutes = 60
+          EOF
+
+      - name: Compile the application
+        run: |
+          mkdir -p target/classes
+          find src/main/java -name '*.java' > target/srcs.txt
+          javac -encoding UTF-8 -d target/classes @target/srcs.txt
+
+      - name: Compile the tests
+        run: |
+          mkdir -p target/test-classes
+          find src/test/java -name '*.java' > target/tsrcs.txt
+          javac -encoding UTF-8 -cp target/classes -d target/test-classes @target/tsrcs.txt
+
+      - name: Run the unit tests (no database)
+        run: java -cp target/classes:target/test-classes com.bubt.findit.SelfTest
+
+      - name: Run the database tests against MySQL
+        run: java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest
+
+      - name: Take the screenshot of the empty board
+        run: |
+          mkdir -p target/screenshots
+          xvfb-run -a --server-args="-screen 0 1400x900x24" \
+            java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot dashboard target/screenshots/dashboard-empty.png --mysql
+
+      - name: Post one lost item through the application
+        run: |
+          java -cp "target/classes:lib/*" com.bubt.findit.tools.PostTool \
+            ayesha@buet.edu Student@123 "Wireless Mouse" ELECTRONICS "Exam Hall"
+
+      - name: Take the screenshots of every screen
+        run: |
+          for mode in login register reset dashboard profile search users posts audit reports post my-posts; do
+            xvfb-run -a --server-args="-screen 0 1400x900x24" \
+              java -cp "target/classes:lib/*" com.bubt.findit.tools.Screenshot "$mode" "target/screenshots/$mode.png" --mysql
+          done
+
+      - name: Upload the screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: target/screenshots
+          if-no-files-found: error

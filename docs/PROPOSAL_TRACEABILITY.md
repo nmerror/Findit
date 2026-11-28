@@ -35,8 +35,8 @@ asks "who did what?".
 
 | Row in the proposal | Owner | Where it lives |
 |---|---|---|
-| **User Login and Authentication** | **Segment 1 (me)** | `service/AuthService.java`, `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java` |
-| Module 1 | Segment 2 | `ui/common/PlaceholderPanel` shows the slot |
+| **User Login and Authentication** | **Segment 1 (me)** | `service/AuthService.java`, `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java`, `ui/auth/ForgotPasswordFrame.java` (the 6-digit PIN reset), `db/dao/PasswordResetDao.java` |
+| Module 1 | Segment 2 | `MainFrame.addSegmentSection(...)` — the slot is created on demand |
 | Module 2 | Segment 3 | same |
 | Module 3 | Segment 4 | same |
 | **Search and Report Generation** | **Segment 1 (me)** + Segment 2 (item filters) | `service/SearchService.java`, `service/ReportService.java`, `ui/search/`, `ui/reports/` |
@@ -47,15 +47,16 @@ asks "who did what?".
 
 | Required screen | Owner | My class |
 |---|---|---|
-| 1. Login / Registration Screen | **Segment 1 (me)** | `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java` |
+| 1. Login / Registration / Reset Screen | **Segment 1 (me)** | `ui/auth/LoginFrame.java`, `ui/auth/RegisterFrame.java`, `ui/auth/ForgotPasswordFrame.java` |
 | 2. Dashboard / Main Menu | **Segment 1 (me)** | `ui/MainFrame.java`, `ui/dashboard/DashboardPanel.java` |
 | 3. Data Management Screen | **Segment 1 (me)** | `ui/users/UserManagementPanel.java` (admin), `ui/users/ProfilePanel.java` |
 | 4. Search / Report Screen | **Segment 1 (me)** | `ui/search/SearchResultsPanel.java`, `ui/reports/ReportPanel.java` |
-| Additional screen | **Segment 1 (me)** | `ui/users/AuditLogPanel.java` (audit trail) |
+| Additional screen | **Segment 1 (me)** | `ui/users/AuditLogPanel.java` (audit trail), `ui/posts/PostLostItemPanel.java` (post a lost item with a photo), `ui/posts/MyPostsPanel.java` (Confirm found), `ui/posts/PostManagementPanel.java` (remove a post) |
 
 **Segment 1 therefore delivers 4 of the 4 required screens + 1 additional
-screen.** The other segments add their screens inside the same window — the
-placeholders are already wired into the navigation.
+screen.** The other segments add their screens inside the same window with
+one call — `MainFrame.addSegmentSection(section, item, cardName, panel)` puts
+the screen in the navigation, registers it and keeps track of its title.
 
 ---
 
@@ -69,7 +70,7 @@ proposal I can show in the viva without any help from the team.
 | Classes and Objects | `core/model/User.java`, `Role.java`, `Session.java`, `OperationResult.java` |
 | Encapsulation | private fields + getters/setters in `User`, `Session`; `User.sanitized()` hides the password hash |
 | **Inheritance** | `ui/common/BaseFrame.java` is an **abstract class**; `LoginFrame`, `RegisterFrame` and `MainFrame` **extend** it |
-| **Polymorphism** | *overriding*: `onThemeChanged()` is declared abstract in `BaseFrame` and overridden in every screen; *overloading*: `PasswordHasher.hash(...)` and `ServiceRegistry.register(...)` |
+| **Polymorphism** | *overriding*: every DAO interface has two implementations that override the same methods — `db/dao/UserDao.java` → `JdbcUserDao` (MySQL) and `InMemoryUserDao` (demo mode), the same for `AuditDao` and `NotificationDao`; *overloading*: `PasswordHasher.hash(...)` and `ServiceRegistry.register(...)` |
 | Abstraction | the six **interfaces** in `core/spi/`, the **abstract class** `BaseFrame`, the DAO interfaces in `db/dao/` |
 | Exception Handling | `try/catch` in the DAOs, custom `AccessDeniedException` and `DataAccessException`, `OperationResult` instead of exceptions across the UI |
 | Collections | `ArrayList`, `HashMap`, `ConcurrentHashMap`, `CopyOnWriteArrayList`, `List.of()` in `SearchService`, `ServiceRegistry`, `EventBus` |
@@ -148,7 +149,7 @@ Copy this into your row of the table:
 > session management with expiry, a permission-based access control service
 > and the audit trail; built the login, registration, dashboard, profile,
 > user-management, audit-log, global-search and report screens in Java Swing
-> with a custom two-mode (dark/light) design system; and published the
+> with a flat, light design system; and published the
 > service contracts and event bus that the other segments implement to plug
 > into the application.
 

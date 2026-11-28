@@ -6,7 +6,7 @@ import com.bubt.findit.core.model.Role;
 import com.bubt.findit.core.model.User;
 import com.bubt.findit.core.model.UserStatus;
 import com.bubt.findit.ui.common.Fonts;
-import com.bubt.findit.ui.common.GlowButton;
+import com.bubt.findit.ui.common.AppButton;
 import com.bubt.findit.ui.common.ModernTable;
 import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.StatusTableRenderer;
@@ -68,28 +68,32 @@ public class UserManagementPanel extends JPanel {
         JPanel toolbar = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         toolbar.setOpaque(false);
 
-        GlowButton suspend = new GlowButton("Suspend", GlowButton.Kind.GHOST);
+        AppButton suspend = new AppButton("Suspend", AppButton.Kind.SECONDARY);
         suspend.setAccent(UiTheme.ROSE);
         suspend.addActionListener(event -> changeStatus(UserStatus.SUSPENDED));
 
-        GlowButton restore = new GlowButton("Restore", GlowButton.Kind.GHOST);
+        AppButton restore = new AppButton("Restore", AppButton.Kind.SECONDARY);
         restore.setAccent(UiTheme.MINT);
         restore.addActionListener(event -> changeStatus(UserStatus.ACTIVE));
 
-        GlowButton makeAdmin = new GlowButton("Grant admin", GlowButton.Kind.GHOST);
+        AppButton makeAdmin = new AppButton("Grant admin", AppButton.Kind.SECONDARY);
         makeAdmin.setAccent(UiTheme.VIOLET);
         makeAdmin.addActionListener(event -> changeRole(Role.ADMIN));
 
-        GlowButton makeStudent = new GlowButton("Revoke admin", GlowButton.Kind.GHOST);
+        AppButton makeStudent = new AppButton("Revoke admin", AppButton.Kind.SECONDARY);
         makeStudent.addActionListener(event -> changeRole(Role.STUDENT));
 
-        GlowButton refresh = new GlowButton("Refresh", GlowButton.Kind.PRIMARY);
+        AppButton delete = new AppButton("Delete account", AppButton.Kind.DANGER);
+        delete.addActionListener(event -> deleteAccount());
+
+        AppButton refresh = new AppButton("Refresh", AppButton.Kind.PRIMARY);
         refresh.addActionListener(event -> reload());
 
         toolbar.add(suspend);
         toolbar.add(restore);
         toolbar.add(makeAdmin);
         toolbar.add(makeStudent);
+        toolbar.add(delete);
         toolbar.add(refresh);
 
         JPanel header = new JPanel(new BorderLayout());
@@ -143,6 +147,37 @@ public class UserManagementPanel extends JPanel {
         }
         Object value = model.getValueAt(row, 0);
         return value == null ? null : Long.valueOf(value.toString());
+    }
+
+    /** DELETE operation on the accounts: the office removes a user. */
+    private void deleteAccount() {
+        int row = table.getSelectedRow();
+        if (row < 0) {
+            messageLabel.setForeground(UiTheme.ROSE);
+            messageLabel.setText("Select an account first.");
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        String name = String.valueOf(model.getValueAt(modelRow, 1));
+        String email = String.valueOf(model.getValueAt(modelRow, 2));
+        int answer = javax.swing.JOptionPane.showConfirmDialog(this,
+                "Delete the account of " + name + " (" + email + ")?\n"
+                + "Everything that belongs to this account is deleted with it.",
+                "Delete the account", javax.swing.JOptionPane.YES_NO_OPTION,
+                javax.swing.JOptionPane.WARNING_MESSAGE);
+        if (answer != javax.swing.JOptionPane.YES_OPTION) {
+            return;
+        }
+        long userId = (Long) model.getValueAt(modelRow, 0);
+        OperationResult<String> result = services.userService().deleteAccount(actor, userId);
+        if (result.isSuccess()) {
+            messageLabel.setForeground(UiTheme.MINT);
+            messageLabel.setText(result.getMessage());
+            reload();
+        } else {
+            messageLabel.setForeground(UiTheme.ROSE);
+            messageLabel.setText(result.getMessage());
+        }
     }
 
     private void changeStatus(UserStatus status) {

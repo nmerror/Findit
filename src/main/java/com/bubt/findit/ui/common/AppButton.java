@@ -6,30 +6,30 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.GradientPaint;
 import java.awt.RenderingHints;
 import java.awt.geom.RoundRectangle2D;
 
 /**
- * A fully custom-painted button: gradient fill for the primary action, a thin
- * luminous outline for secondary actions, plus hover / pressed states and a
- * soft glow.
+ * The button of the application.
+ *
+ * <p>Four kinds, all flat: a filled accent button for the main action, a
+ * bordered button for the secondary actions, a red one for the dangerous ones
+ * and a quiet one for the rest. There is no glow and no gradient - the hover
+ * state is a slightly different fill.
  */
-public class GlowButton extends JButton {
+public class AppButton extends JButton {
 
     public enum Kind {
-        PRIMARY, GHOST, DANGER, SUBTLE
+        PRIMARY, SECONDARY, DANGER, SUBTLE
     }
 
     private final Kind kind;
     private Color accent = UiTheme.ACCENT;
     private int radius = UiTheme.R_MD;
-    private int glowSize = 16;
-    private boolean glowOnHover = true;
     private boolean hover;
     private boolean pressed;
 
-    public GlowButton(String text, Kind kind) {
+    public AppButton(String text, Kind kind) {
         super(text);
         this.kind = kind;
         setOpaque(false);
@@ -67,26 +67,15 @@ public class GlowButton extends JButton {
         });
     }
 
-    public GlowButton setAccent(Color color) {
+    /** Changes the accent colour of a primary button. */
+    public AppButton setAccent(Color color) {
         this.accent = color;
         repaint();
         return this;
     }
 
-    public GlowButton setRadius(int value) {
+    public AppButton setRadius(int value) {
         this.radius = value;
-        repaint();
-        return this;
-    }
-
-    public GlowButton setGlow(int size) {
-        this.glowSize = size;
-        repaint();
-        return this;
-    }
-
-    public GlowButton setGlowOnHover(boolean value) {
-        this.glowOnHover = value;
         repaint();
         return this;
     }
@@ -99,54 +88,36 @@ public class GlowButton extends JButton {
 
         int w = getWidth();
         int h = getHeight();
-        int inset = 1;
+        float inset = 1f;
         RoundRectangle2D shape = new RoundRectangle2D.Float(inset, inset,
                 w - inset * 2f, h - inset * 2f, radius, radius);
-
         boolean active = hover || pressed;
 
         switch (kind) {
             case PRIMARY -> {
-                if (glowOnHover && active) {
-                    for (int i = glowSize; i > 0; i--) {
-                        float t = 1f - (float) i / glowSize;
-                        g2.setColor(UiTheme.alpha(accent, (int) (46 * t)));
-                        g2.fill(new RoundRectangle2D.Float(inset - i, inset - i,
-                                w - inset * 2f + 2f * i, h - inset * 2f + 2f * i, radius + 2f * i, radius + 2f * i));
-                    }
-                }
-                g2.setPaint(new GradientPaint(0, 0, UiTheme.mix(accent, Color.WHITE, 0.18),
-                        0, h, UiTheme.mix(accent, UiTheme.ON_ACCENT, 0.22)));
+                g2.setColor(active ? UiTheme.alpha(Color.BLACK, pressed ? 40 : 18) : accent);
                 g2.fill(shape);
-                g2.setColor(UiTheme.alpha(Color.WHITE, pressed ? 40 : 70));
-                g2.setStroke(new java.awt.BasicStroke(1f));
-                g2.draw(shape);
                 setForeground(UiTheme.ON_ACCENT);
             }
             case DANGER -> {
-                if (glowOnHover && active) {
-                    for (int i = glowSize; i > 0; i--) {
-                        float t = 1f - (float) i / glowSize;
-                        g2.setColor(UiTheme.alpha(UiTheme.ROSE, (int) (40 * t)));
-                        g2.fill(new RoundRectangle2D.Float(inset - i, inset - i,
-                                w - inset * 2f + 2f * i, h - inset * 2f + 2f * i, radius + 2f * i, radius + 2f * i));
-                    }
-                }
-                g2.setPaint(new GradientPaint(0, 0, UiTheme.mix(UiTheme.ROSE, Color.WHITE, 0.12),
-                        0, h, UiTheme.mix(UiTheme.ROSE, UiTheme.ON_ACCENT, 0.18)));
+                g2.setColor(active ? UiTheme.alpha(UiTheme.ROSE, pressed ? 60 : 30)
+                        : UiTheme.alpha(UiTheme.ROSE, 18));
                 g2.fill(shape);
-                setForeground(UiTheme.ON_ACCENT);
-            }
-            case GHOST -> {
-                g2.setColor(active ? UiTheme.alpha(accent, 28) : UiTheme.alpha(UiTheme.SURFACE_2, 140));
-                g2.fill(shape);
-                g2.setColor(active ? UiTheme.alpha(accent, 190) : UiTheme.STROKE);
+                g2.setColor(UiTheme.ROSE);
                 g2.setStroke(new java.awt.BasicStroke(1f));
                 g2.draw(shape);
-                setForeground(active ? UiTheme.mix(accent, Color.WHITE, 0.25) : UiTheme.TEXT_DIM);
+                setForeground(UiTheme.ROSE);
+            }
+            case SECONDARY -> {
+                g2.setColor(active ? UiTheme.SURFACE_2 : UiTheme.SURFACE);
+                g2.fill(shape);
+                g2.setColor(active ? accent : UiTheme.STROKE);
+                g2.setStroke(new java.awt.BasicStroke(1f));
+                g2.draw(shape);
+                setForeground(active ? UiTheme.ACCENT_DEEP : UiTheme.TEXT_DIM);
             }
             default -> {
-                g2.setColor(active ? UiTheme.SURFACE_2 : UiTheme.alpha(UiTheme.SURFACE_2, 90));
+                g2.setColor(active ? UiTheme.SURFACE_3 : UiTheme.SURFACE_2);
                 g2.fill(shape);
                 setForeground(UiTheme.TEXT_DIM);
             }
@@ -159,6 +130,6 @@ public class GlowButton extends JButton {
     @Override
     public Dimension getPreferredSize() {
         Dimension size = super.getPreferredSize();
-        return new Dimension(Math.max(size.width + 34, 120), Math.max(size.height + 14, 42));
+        return new Dimension(Math.max(size.width + 26, 110), Math.max(size.height + 12, 38));
     }
 }

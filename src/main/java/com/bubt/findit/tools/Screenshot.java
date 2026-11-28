@@ -7,7 +7,9 @@ import com.bubt.findit.core.model.User;
 import com.bubt.findit.db.Database;
 import com.bubt.findit.db.DaoFactory;
 import com.bubt.findit.ui.MainFrame;
+import com.bubt.findit.ui.auth.ForgotPasswordFrame;
 import com.bubt.findit.ui.auth.LoginFrame;
+import com.bubt.findit.ui.auth.RegisterFrame;
 
 import javax.imageio.ImageIO;
 import javax.swing.SwingUtilities;
@@ -49,17 +51,7 @@ public final class Screenshot {
         String mode = args.length > 0 ? args[0] : "login";
         Path output = Path.of(args.length > 1 ? args[1] : "findit-screenshot.png");
 
-        // "light:dashboard" takes the screenshot in the light palette.
-        final String screen;
-        if (mode.startsWith("light:")) {
-            screen = mode.substring("light:".length());
-            com.bubt.findit.ui.common.UiTheme.setMode(
-                    com.bubt.findit.ui.common.UiTheme.Mode.LIGHT);
-        } else {
-            screen = mode;
-            com.bubt.findit.ui.common.UiTheme.setMode(
-                    com.bubt.findit.ui.common.UiTheme.Mode.DARK);
-        }
+        final String screen = mode;
         com.bubt.findit.ui.common.UiTheme.apply();
 
         boolean useMysql = args.length > 2 && "--mysql".equals(args[2]);
@@ -70,32 +62,40 @@ public final class Screenshot {
 
         SwingUtilities.invokeAndWait(() -> {
             switch (screen) {
-                case "demo", "users", "audit", "reports" -> {
-                    // With the real database we want the real rows, not the
-                    // fake demo data.
-                    if (!useMysql) {
-                        DemoSegmentData.install();
-                    }
+                case "register" -> new RegisterFrame(services).setVisible(true);
+                case "reset" -> new ForgotPasswordFrame(services).setVisible(true);
+                case "demo", "users", "posts", "audit", "reports" -> {
+                    // The screenshots show the real database - no fake rows.
                     seedAdmin(services);
                     services.authService().login("admin@findit.edu", "Admin@1234");
                     MainFrame frame = new MainFrame(services);
                     frame.setVisible(true);
                     if ("reports".equals(screen)) {
                         frame.navigateTo("reports");
+                    } else if ("posts".equals(screen)) {
+                        frame.navigateTo("manage-posts");
                     } else if (!"demo".equals(screen)) {
                         frame.navigateTo(screen);
                     }
                 }
-                case "dashboard", "profile", "segment2", "search" -> {
-                    services.authService().register("Ayesha Rahman", "ayesha@buet.edu", "21-04234",
-                            "Passw0rd1", "Passw0rd1");
-                    services.authService().login("ayesha@buet.edu", "Passw0rd1");
+                case "dashboard", "profile", "search", "post", "my-posts" -> {
+                    // The student account of the seed data - it is created when
+                    // it does not exist yet.
+                    if (services.userDao().findByEmail("ayesha@buet.edu").isEmpty()) {
+                        services.authService().register("Ayesha Rahman", "ayesha@buet.edu",
+                                "21-04234", "Student@123", "Student@123");
+                    }
+                    services.authService().login("ayesha@buet.edu", "Student@123");
                     MainFrame frame = new MainFrame(services);
                     frame.setVisible(true);
                     if ("search".equals(screen)) {
                         frame.setSearchQuery("Ayesha");
+                    } else if ("post".equals(screen)) {
+                        frame.navigateTo("post");
+                    } else if ("my-posts".equals(screen)) {
+                        frame.navigateTo("my-posts");
                     } else if (!"dashboard".equals(screen)) {
-                        frame.navigateTo("segment2".equals(screen) ? "s2-report" : screen);
+                        frame.navigateTo(screen);
                     }
                 }
                 default -> new LoginFrame(services).setVisible(true);

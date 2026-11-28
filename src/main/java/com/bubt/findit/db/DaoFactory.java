@@ -5,6 +5,7 @@ import com.bubt.findit.db.dao.ClaimDao;
 import com.bubt.findit.db.dao.InMemoryAuditDao;
 import com.bubt.findit.db.dao.InMemoryNotificationDao;
 import com.bubt.findit.db.dao.InMemoryUserDao;
+import com.bubt.findit.db.dao.InMemoryItemDao;
 import com.bubt.findit.db.dao.ItemDao;
 import com.bubt.findit.db.dao.JdbcAuditDao;
 import com.bubt.findit.db.dao.JdbcClaimDao;
@@ -14,6 +15,9 @@ import com.bubt.findit.db.dao.JdbcNotificationDao;
 import com.bubt.findit.db.dao.JdbcUserDao;
 import com.bubt.findit.db.dao.MatchDao;
 import com.bubt.findit.db.dao.NotificationDao;
+import com.bubt.findit.db.dao.InMemoryPasswordResetDao;
+import com.bubt.findit.db.dao.JdbcPasswordResetDao;
+import com.bubt.findit.db.dao.PasswordResetDao;
 import com.bubt.findit.db.dao.UserDao;
 
 /**
@@ -30,6 +34,7 @@ public final class DaoFactory {
     private static ItemDao itemDao;
     private static ClaimDao claimDao;
     private static MatchDao matchDao;
+    private static PasswordResetDao passwordResetDao;
 
     private DaoFactory() {
     }
@@ -57,7 +62,7 @@ public final class DaoFactory {
 
     public static ItemDao itemDao() {
         if (itemDao == null) {
-            itemDao = Database.isMysql() ? new JdbcItemDao() : null;
+            itemDao = Database.isMysql() ? new JdbcItemDao() : new InMemoryItemDao();
         }
         return itemDao;
     }
@@ -76,6 +81,15 @@ public final class DaoFactory {
         return matchDao;
     }
 
+    /** The PIN codes of the password reset. */
+    public static PasswordResetDao passwordResetDao() {
+        if (passwordResetDao == null) {
+            passwordResetDao = Database.isMysql()
+                    ? new JdbcPasswordResetDao() : new InMemoryPasswordResetDao();
+        }
+        return passwordResetDao;
+    }
+
     public static void reset() {
         userDao = null;
         auditDao = null;
@@ -83,5 +97,6 @@ public final class DaoFactory {
         itemDao = null;
         claimDao = null;
         matchDao = null;
+        passwordResetDao = null;
     }
 }

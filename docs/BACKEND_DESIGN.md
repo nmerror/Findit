@@ -126,7 +126,7 @@ Reading and writing want different shapes, so there are two kinds of beans:
 
 ## 6. The schema
 
-`sql/01_schema.sql` creates the **whole** project database — eight tables with
+`sql/01_schema.sql` creates the **whole** project database — nine tables with
 foreign keys, unique constraints and indexes:
 
 | Table | Owner | Purpose |
@@ -177,7 +177,7 @@ can replace any of them with their own class, and nothing else has to change.
 | Mode | Command | What it uses |
 |---|---|---|
 | Real database | `bash run.sh --mysql` | MySQL 8 + JDBC, every table |
-| Demo / no database | `bash run.sh` | in-memory DAOs + fake segment data |
+| Memory / no database | `bash run.sh` | the in-memory DAOs — the same code path, without a server |
 
 The launcher picks the driver from `lib/` (fetched by `setup-java.sh`).
 
@@ -189,7 +189,7 @@ The launcher picks the driver from `lib/` (fetched by `setup-java.sh`).
 java -cp "target/classes:target/test-classes:lib/*" com.bubt.findit.BackendSelfTest
 ```
 
-**49 checks** against the real database: users, audit trail, notifications,
+**67 checks** against the real database: users, audit trail, notifications,
 items, matches, claims, the contracts, transactions and the pool. It writes
 its own rows (prefix `BACKEND-TEST-`) and removes them again.
 

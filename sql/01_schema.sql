@@ -11,6 +11,7 @@
 --    matches          -> Segment 3                Matching results
 --    claims           -> Segment 3 + Segment 4    Ownership claims
 --    notifications    -> Segment 1 (optional)     Dashboard alerts
+--    password_resets  -> Segment 1                PIN codes for the password reset
 --
 --  RULE FOR THE WHOLE TEAM: a segment may only INSERT/UPDATE its own tables.
 --  Cross-segment data is read through the tables above (with foreign keys),
@@ -22,6 +23,7 @@ USE findit;
 
 -- Drop in reverse dependency order so the script can be re-run safely.
 DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS password_resets;
 DROP TABLE IF EXISTS claims;
 DROP TABLE IF EXISTS matches;
 DROP TABLE IF EXISTS item_images;
@@ -87,6 +89,20 @@ CREATE TABLE notifications (
 -- ---------------------------------------------------------------------------
 -- Segment 2 - locations
 -- ---------------------------------------------------------------------------
+-- Password reset: the PIN code that the user types to set a new password.
+CREATE TABLE password_resets (
+    reset_id    INT AUTO_INCREMENT PRIMARY KEY,
+    user_id     INT         NOT NULL,
+    pin_code    VARCHAR(6)  NOT NULL,
+    expires_at  TIMESTAMP   NOT NULL,
+    used_at     TIMESTAMP   NULL,
+    created_at  TIMESTAMP   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_reset_user FOREIGN KEY (user_id) REFERENCES users (user_id)
+        ON DELETE CASCADE,
+    INDEX idx_reset_user (user_id)
+) ENGINE = InnoDB;
+
 CREATE TABLE locations (
     location_id   INT AUTO_INCREMENT PRIMARY KEY,
     location_name VARCHAR(120) NOT NULL,

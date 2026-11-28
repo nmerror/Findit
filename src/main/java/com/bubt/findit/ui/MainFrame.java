@@ -9,11 +9,13 @@ import com.bubt.findit.ui.common.BaseFrame;
 import com.bubt.findit.ui.common.Fonts;
 import com.bubt.findit.ui.common.Icons;
 import com.bubt.findit.ui.common.NavButton;
-import com.bubt.findit.ui.common.PlaceholderPanel;
 import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.TopBar;
 import com.bubt.findit.ui.common.UiTheme;
 import com.bubt.findit.ui.dashboard.DashboardPanel;
+import com.bubt.findit.ui.posts.MyPostsPanel;
+import com.bubt.findit.ui.posts.PostLostItemPanel;
+import com.bubt.findit.ui.posts.PostManagementPanel;
 import com.bubt.findit.ui.reports.ReportPanel;
 import com.bubt.findit.ui.search.SearchResultsPanel;
 import com.bubt.findit.ui.users.AuditLogPanel;
@@ -23,6 +25,7 @@ import com.bubt.findit.ui.users.UserManagementPanel;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import java.awt.BorderLayout;
@@ -32,14 +35,17 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * The main window: a slim navigation rail on the left, a header on top and
- * the screens of every segment inside the same frame.
+ * The main window: a navigation rail on the left, a header on top and the
+ * screens of the segment inside the same frame.
  *
- * <p>Every part of the window is rebuilt when the palette changes, so the dark
- * and the light mode are pixel-perfect and not just "good enough".
+ * <p>Only the screens of Segment 1 are listed in the navigation. The screens of
+ * Segment 2, 3 and 4 are added later by their owners with
+ * {@link #addSegmentSection(String, String, String, JComponent)} - the window
+ * already knows how to place them, so nothing has to be re-plumbed.
  */
 public class MainFrame extends BaseFrame {
 
@@ -57,9 +63,10 @@ public class MainFrame extends BaseFrame {
     private NavButton activeButton;
     private String currentCard = "dashboard";
     private final Map<String, NavButton> navButtons = new HashMap<>();
+    private final Map<String, String> cardTitles = new LinkedHashMap<>();
 
     public MainFrame(AppServices services) {
-        super(services.config().appName(), "Campus Lost & Found Management System", 1280, 780);
+        super(services.config().appName(), "Campus Lost & Found Management System", 1240, 760);
         this.services = services;
         this.user = AuthContext.currentUser();
 
@@ -103,22 +110,6 @@ public class MainFrame extends BaseFrame {
         getContent().repaint();
     }
 
-    @Override
-    protected void onThemePersisted() {
-        services.config().saveTheme(UiTheme.mode().name().toLowerCase());
-    }
-
-    /** Rebuilds every screen with the new palette. */
-    @Override
-    protected void onThemeChanged() {
-        navButtons.clear();
-        activeButton = null;
-        buildShell();
-        buildNavigation();
-        buildContent();
-        show(currentCard, navButtons.get(currentCard));
-    }
-
     // ------------------------------------------------------------ sidebar
 
     private JPanel buildSidebar() {
@@ -129,25 +120,25 @@ public class MainFrame extends BaseFrame {
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setColor(UiTheme.SIDEBAR);
                 g2.fillRect(0, 0, getWidth(), getHeight());
-                g2.setColor(UiTheme.STROKE_SOFT);
+                g2.setColor(UiTheme.STROKE);
                 g2.drawLine(getWidth() - 1, 0, getWidth() - 1, getHeight());
                 g2.dispose();
             }
         };
         sidebar.setOpaque(false);
-        sidebar.setPreferredSize(new Dimension(248, 10));
-        sidebar.setBorder(BorderFactory.createEmptyBorder(18, 14, 16, 14));
+        sidebar.setPreferredSize(new Dimension(224, 10));
+        sidebar.setBorder(BorderFactory.createEmptyBorder(16, 12, 14, 12));
         sidebar.add(navigation, BorderLayout.CENTER);
         return sidebar;
     }
 
     private JPanel buildUserCard() {
-        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
+        RoundedPanel card = new RoundedPanel(UiTheme.R_MD, UiTheme.SURFACE_2, UiTheme.STROKE_SOFT);
         card.setLayout(new BorderLayout(10, 0));
-        card.setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
+        card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
         AvatarLabel avatar = new AvatarLabel(user.initials(),
-                user.isAdmin() ? UiTheme.VIOLET : UiTheme.ACCENT, 36);
+                user.isAdmin() ? UiTheme.VIOLET : UiTheme.ACCENT, 34);
 
         JLabel name = new JLabel(user.getFullName());
         name.setFont(Fonts.medium(12));
@@ -178,32 +169,25 @@ public class MainFrame extends BaseFrame {
         addBrand();
         addNavButton("Dashboard", Icons.Glyph.DASHBOARD, "dashboard");
 
+        if (!user.isAdmin()) {
+            addSection("Lost and found");
+            addNavButton("Post a Lost Item", Icons.Glyph.PLUS, "post");
+            addNavButton("My Posts", Icons.Glyph.TAG, "my-posts");
+        }
+
         addSection("Account");
         addNavButton("My Profile", Icons.Glyph.KEY, "profile");
+
         if (user.isAdmin()) {
-            addNavButton("Manage Users", Icons.Glyph.USERS, "users");
+            addSection("Office");
+            addNavButton("Manage Accounts", Icons.Glyph.USERS, "users");
+            addNavButton("Manage Posts", Icons.Glyph.BOX, "manage-posts");
             addNavButton("Audit Log", Icons.Glyph.LIST, "audit");
         }
 
         addSection("Insight");
         addNavButton("Search Results", Icons.Glyph.SEARCH, "search");
         addNavButton("Reports", Icons.Glyph.CHART, "reports");
-
-        addSection("Segment 2 — Reporting");
-        addNavButton("Report Item", Icons.Glyph.PLUS, "s2-report");
-        addNavButton("Browse Items", Icons.Glyph.BOX, "s2-browse");
-
-        addSection("Segment 3 — Matching & Claims");
-        addNavButton("My Claims", Icons.Glyph.TAG, "s3-claims");
-        if (user.isAdmin()) {
-            addNavButton("Match Results", Icons.Glyph.CHART, "s3-matches");
-        }
-
-        addSection("Segment 4 — Verification");
-        if (user.isAdmin()) {
-            addNavButton("Verify Claims", Icons.Glyph.SHIELD, "s4-verify");
-            addNavButton("Returns", Icons.Glyph.CHECK, "s4-return");
-        }
 
         navigation.add(Box.createVerticalGlue());
 
@@ -217,11 +201,11 @@ public class MainFrame extends BaseFrame {
     }
 
     private void addBrand() {
-        JLabel brand = new JLabel("FindIt");
-        brand.setFont(Fonts.display(22));
+        JLabel brand = new JLabel(services.config().appName());
+        brand.setFont(Fonts.display(20));
         brand.setForeground(UiTheme.TEXT);
         brand.setAlignmentX(LEFT_ALIGNMENT);
-        brand.setBorder(BorderFactory.createEmptyBorder(2, 10, 16, 10));
+        brand.setBorder(BorderFactory.createEmptyBorder(2, 10, 14, 10));
         navigation.add(brand);
     }
 
@@ -230,7 +214,7 @@ public class MainFrame extends BaseFrame {
         label.setFont(Fonts.medium(9));
         label.setForeground(UiTheme.TEXT_MUTE);
         label.setAlignmentX(0.5f);
-        label.setBorder(BorderFactory.createEmptyBorder(16, 12, 7, 12));
+        label.setBorder(BorderFactory.createEmptyBorder(14, 12, 6, 12));
         label.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
         navigation.add(label);
     }
@@ -251,60 +235,63 @@ public class MainFrame extends BaseFrame {
     private void buildContent() {
         contentHolder.removeAll();
 
-        contentHolder.add(new DashboardPanel(services.dashboardService(), user), "dashboard");
+        contentHolder.add(new DashboardPanel(services, services.dashboardService(), user), "dashboard");
         contentHolder.add(new ProfilePanel(services, user), "profile");
         contentHolder.add(searchResults, "search");
         contentHolder.add(new ReportPanel(services.dashboardService(), services.reportService(),
                 services.auditDao(), user), "reports");
 
+        if (!user.isAdmin()) {
+            contentHolder.add(new PostLostItemPanel(services, user), "post");
+            contentHolder.add(new MyPostsPanel(services, user), "my-posts");
+        }
+
         if (user.isAdmin()) {
             contentHolder.add(new UserManagementPanel(services, user), "users");
+            contentHolder.add(new PostManagementPanel(services, user), "manage-posts");
             contentHolder.add(new AuditLogPanel(services, user), "audit");
         }
 
-        contentHolder.add(new PlaceholderPanel("SEGMENT 2", "Report a Lost or Found Item",
-                "This screen belongs to Segment 2 — Lost & Found Item Reporting, Image Upload & "
-                        + "Location Management.\n\nIt is already wired into the navigation and "
-                        + "sits inside this window, so nothing has to be re-plumbed when the real "
-                        + "screen arrives: replace this placeholder with your panel.",
-                "Contract:  core.spi.ItemCatalogService   ->   ServiceRegistry.register(ItemCatalogService.class, yourImpl)"),
-                "s2-report");
-
-        contentHolder.add(new PlaceholderPanel("SEGMENT 2", "Browse Items",
-                "This screen belongs to Segment 2. It lists every open report and uses the same "
-                        + "ItemCatalogService contract that the dashboard already reads from.",
-                "Contract:  core.spi.ItemCatalogService   ->   ServiceRegistry.register(ItemCatalogService.class, yourImpl)"),
-                "s2-browse");
-
-        contentHolder.add(new PlaceholderPanel("SEGMENT 3", "My Claims",
-                "This screen belongs to Segment 3 — Intelligent Item Matching, Similarity Detection "
-                        + "& Ownership Claim Management.\n\nRead the signed-in student from "
-                        + "AuthContext.currentUser() — the same call this project already uses "
-                        + "everywhere.",
-                "Contract:  core.spi.ClaimQueryService + core.spi.MatchQueryService   ->   ServiceRegistry.register(...)"),
-                "s3-claims");
-
-        contentHolder.add(new PlaceholderPanel("SEGMENT 3", "Match Results",
-                "This screen belongs to Segment 3. It shows the lost/found pairs produced by the "
-                        + "matching engine together with their similarity score.",
-                "Contract:  core.spi.MatchQueryService   ->   ServiceRegistry.register(MatchQueryService.class, yourImpl)"),
-                "s3-matches");
-
-        contentHolder.add(new PlaceholderPanel("SEGMENT 4", "Verify Claims",
-                "This screen belongs to Segment 4 — Administrative Verification, Claim Approval & "
-                        + "Item Return Management.\n\nIt is only reachable by administrators: the "
-                        + "navigation already hides it from students, and the service layer checks "
-                        + "the permission again.",
-                "Contract:  core.spi.AdminWorkloadService   ->   ServiceRegistry.register(AdminWorkloadService.class, yourImpl)"),
-                "s4-verify");
-
-        contentHolder.add(new PlaceholderPanel("SEGMENT 4", "Item Return Management",
-                "This screen belongs to Segment 4. It confirms that a returned item really reached "
-                        + "its owner and closes the case.",
-                "Contract:  core.spi.AdminWorkloadService   ->   ServiceRegistry.register(AdminWorkloadService.class, yourImpl)"),
-                "s4-return");
+        cardTitles.put("dashboard", "Dashboard");
+        cardTitles.put("profile", "My Profile");
+        cardTitles.put("post", "Post a Lost Item");
+        cardTitles.put("my-posts", "My Posts");
+        cardTitles.put("users", "Manage Accounts");
+        cardTitles.put("manage-posts", "Manage Posts");
+        cardTitles.put("audit", "Audit Log");
+        cardTitles.put("search", "Search Results");
+        cardTitles.put("reports", "Reports");
 
         show(currentCard, navButtons.get(currentCard));
+    }
+
+    /**
+     * Adds a screen of another segment to the window.
+     *
+     * <p>This is the seam for the other segments of the project: the owner of
+     * Segment 2, 3 or 4 builds his panel and hands it over here. The window
+     * creates the entry in the navigation, registers the panel and keeps track
+     * of the title of the screen.
+     *
+     * <pre>
+     *   mainFrame.addSegmentSection("Segment 2 - Reporting", "Report an Item",
+     *           "s2-report", new ReportItemPanel(services));
+     * </pre>
+     *
+     * @param section  the heading of the group in the navigation
+     * @param item     the label of the entry in the navigation
+     * @param cardName the internal name of the screen
+     * @param panel    the screen itself
+     */
+    public void addSegmentSection(String section, String item, String cardName, JComponent panel) {
+        addSection(section);
+        addNavButton(item, Icons.Glyph.BOX, cardName);
+        contentHolder.add(panel, cardName);
+        cardTitles.put(cardName, item);
+        navigation.revalidate();
+        navigation.repaint();
+        contentHolder.revalidate();
+        contentHolder.repaint();
     }
 
     private void show(String cardName, NavButton button) {
@@ -327,20 +314,7 @@ public class MainFrame extends BaseFrame {
     }
 
     private void updateTopBarTitle(String cardName) {
-        String title = switch (cardName) {
-            case "profile" -> "My Profile";
-            case "users" -> "Manage Users";
-            case "audit" -> "Audit Log";
-            case "search" -> "Search Results";
-            case "reports" -> "Reports";
-            case "s2-report" -> "Report an Item";
-            case "s2-browse" -> "Browse Items";
-            case "s3-claims" -> "My Claims";
-            case "s3-matches" -> "Match Results";
-            case "s4-verify" -> "Verify Claims";
-            case "s4-return" -> "Item Returns";
-            default -> "Dashboard";
-        };
+        String title = cardTitles.getOrDefault(cardName, "Dashboard");
         if (topBar != null) {
             topBar.setTitle(title);
         }

@@ -27,19 +27,11 @@ public final class Main {
 
     public static void main(String[] args) {
         AppConfig config = resolveConfig(args);
-        com.bubt.findit.ui.common.UiTheme.setMode(
-                "light".equalsIgnoreCase(config.theme())
-                        ? com.bubt.findit.ui.common.UiTheme.Mode.LIGHT
-                        : com.bubt.findit.ui.common.UiTheme.Mode.DARK);
+        com.bubt.findit.ui.common.UiTheme.apply();
         Database.initialize(config);
         DaoFactory.reset();
 
         AppServices services = new AppServices(config);
-        if (hasFlag(args, "--demo")) {
-            // Fake data for Segments 2/3/4 so the dashboard can be presented
-            // before they are finished.
-            com.bubt.findit.tools.DemoSegmentData.install();
-        }
         seedAdministrator(services);
 
         System.out.println("=========================================");
@@ -57,15 +49,6 @@ public final class Main {
             }
         }
         return AppConfig.load();
-    }
-
-    private static boolean hasFlag(String[] args, String flag) {
-        for (String arg : args) {
-            if (flag.equalsIgnoreCase(arg)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /**

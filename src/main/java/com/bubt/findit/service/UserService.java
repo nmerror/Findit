@@ -53,6 +53,45 @@ public class UserService {
         return OperationResult.ok(removed, removed + " old entries removed.");
     }
 
+    /**
+     * The accounts the viewer may see.
+     *
+     * <p>The administrator sees every account, a student sees only the
+     * student accounts - the manager account of the office stays inside the
+     * admin panel.
+     */
+    public List<User> visibleAccounts(User viewer, int limit) {
+        if (viewer != null && viewer.isAdmin()) {
+            return userDao.findAll(limit, 0);
+        }
+        return userDao.findByRole(Role.STUDENT, limit);
+    }
+
+    /**
+     * DELETE operation on the {@code users} table: the administrator removes
+     * an account completely.
+     */
+    public OperationResult<String> deleteAccount(User actor, long userId) {
+        rbac.require(actor, Permission.MANAGE_USERS);
+        if (actor.getId() != null && actor.getId() == userId) {
+            return OperationResult.fail("SELF_DELETE", "You cannot delete your own account.");
+        }
+        User target = userDao.findById(userId).orElse(null);
+        if (target == null) {
+            return OperationResult.fail("NOT_FOUND", "That account does not exist any more.");
+        }
+        if (!userDao.deleteById(userId)) {
+            return OperationResult.fail("DELETE_FAILED", "The account could not be deleted.");
+        }
+        eventBus.publish(AppEvent.of(Events.USER_DELETED)
+                .actor(actor.getId())
+                .with("targetUserId", userId)
+                .build());
+        audit(actor.getId(), "DELETE_USER", "Deleted the account " + target.getEmail());
+        return OperationResult.ok(target.getEmail(), "The account of " + target.getFullName()
+                + " was deleted.");
+    }
+
     public List<User> listUsers(User actor, int limit, int offset) {
         rbac.require(actor, Permission.MANAGE_USERS);
         return userDao.findAll(limit, offset);

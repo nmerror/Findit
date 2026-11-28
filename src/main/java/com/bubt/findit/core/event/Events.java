@@ -12,6 +12,7 @@ public final class Events {
     public static final String USER_LOGOUT = "user.logout";
     public static final String USER_STATUS_CHANGED = "user.status.changed";
     public static final String USER_ROLE_CHANGED = "user.role.changed";
+    public static final String USER_DELETED = "user.deleted";
     public static final String PASSWORD_CHANGED = "user.password.changed";
 
     private Events() {

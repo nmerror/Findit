@@ -18,6 +18,7 @@ public class ItemSummary {
     private Long postedByUserId;
     private String status;
     private LocalDateTime createdAt;
+    private String imagePath;
 
     public ItemSummary() {
     }
@@ -74,5 +75,14 @@ public class ItemSummary {
 
     public LocalDateTime getCreatedAt() {
         return createdAt;
+    }
+
+    /** The file path of the photo the user attached, or null. */
+    public String getImagePath() {
+        return imagePath;
+    }
+
+    public void setImagePath(String imagePath) {
+        this.imagePath = imagePath;
     }
 }
