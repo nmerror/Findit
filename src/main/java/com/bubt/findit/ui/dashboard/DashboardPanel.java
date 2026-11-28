@@ -1,97 +1,109 @@
 package com.bubt.findit.ui.dashboard;
 
-import com.bubt.findit.core.model.DashboardStats;
+import com.bubt.findit.app.AppServices;
 import com.bubt.findit.core.model.ItemSummary;
 import com.bubt.findit.core.model.User;
 import com.bubt.findit.service.DashboardService;
-import com.bubt.findit.ui.common.BarList;
-import com.bubt.findit.ui.common.StackedBar;
+import com.bubt.findit.service.PostService;
+import com.bubt.findit.ui.common.EmptyState;
 import com.bubt.findit.ui.common.Fonts;
 import com.bubt.findit.ui.common.Icons;
 import com.bubt.findit.ui.common.ModernTable;
+import com.bubt.findit.ui.common.PhotoRenderer;
 import com.bubt.findit.ui.common.RoundedPanel;
 import com.bubt.findit.ui.common.StatCard;
-import com.bubt.findit.ui.common.StretchPanel;
 import com.bubt.findit.ui.common.StatusTableRenderer;
+import com.bubt.findit.ui.common.StretchPanel;
 import com.bubt.findit.ui.common.UiTheme;
 
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
-import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
 import javax.swing.table.DefaultTableModel;
 import java.awt.BorderLayout;
-import java.awt.Color;
+import java.awt.CardLayout;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
- * The dashboard of Segment 1.
+ * The dashboard - the screen the user sees after the login.
  *
- * <p>It never queries the tables of the other segments - every number comes
- * from {@link DashboardService}, which asks them through their published
- * contracts.
+ * <p>It shows three things and nothing more: how many lost items are on the
+ * board, the lost items themselves and the accounts that exist. The numbers
+ * come from the database, so they are zero until somebody really posts.
  */
 public class DashboardPanel extends JPanel {
 
-    /** All rows of the dashboard share this alignment, so they are all
-     *  stretched over the full width of the window. */
+    /** All rows of the dashboard share this alignment, so they all get the
+     *  full width of the window. */
     private static final float ROW_ALIGNMENT = 0.5f;
 
+    private static final DateTimeFormatter DATE =
+            DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
+
+    private final AppServices services;
     private final DashboardService dashboardService;
+    private final PostService postService;
     private final User viewer;
 
-    private final StatCard lostCard;
-    private final StatCard foundCard;
-    private final StatCard claimsCard;
-    private final StatCard usersCard;
-    private final StackedBar claimBar = new StackedBar();
-    private final BarList barList = new BarList();
-    private final JLabel hintLabel = new JLabel(" ");
-    private final DefaultTableModel model = new DefaultTableModel(
-            new Object[]{"Item", "Type", "Category", "Location", "Reported by", "Status"}, 0) {
+    private final StatCard lostCard = new StatCard("Lost posts", 0, "waiting for their owner",
+            Icons.Glyph.BOX, UiTheme.ACCENT);
+    private final StatCard foundCard = new StatCard("Found posts", 0, "waiting to be claimed",
+            Icons.Glyph.CHECK, UiTheme.MINT);
+    private final StatCard accountCard = new StatCard("Accounts", 0, "registered users",
+            Icons.Glyph.USERS, UiTheme.VIOLET);
+    private final StatCard ownCard = new StatCard("My posts", 0, "posted by you",
+            Icons.Glyph.TAG, UiTheme.AMBER);
+
+    private final DefaultTableModel postModel = new DefaultTableModel(
+            new Object[]{"Photo", "Item", "Category", "Where", "Posted by", "Posted on"}, 0) {
         @Override
         public boolean isCellEditable(int row, int column) {
             return false;
         }
     };
-    private final JTable table;
+    private final DefaultTableModel accountModel = new DefaultTableModel(
+            new Object[]{"Name", "E-mail", "Student ID", "Role", "Joined"}, 0) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
-    public DashboardPanel(DashboardService dashboardService, User viewer) {
+    private final CardLayout postCards = new CardLayout();
+    private final JPanel postArea = new JPanel(postCards);
+    private final JTable postTable = ModernTable.style(new JTable(postModel));
+    private final JTable accountTable = ModernTable.style(new JTable(accountModel));
+
+    public DashboardPanel(AppServices services, DashboardService dashboardService, User viewer) {
         super(new BorderLayout());
+        this.services = services;
         this.dashboardService = dashboardService;
+        this.postService = services.postService();
         this.viewer = viewer;
 
         setBackground(UiTheme.WINDOW);
         setBorder(BorderFactory.createEmptyBorder(4, 26, 22, 26));
 
-        lostCard = new StatCard("Lost items", 0, "Reported by students", Icons.Glyph.BOX, UiTheme.ACCENT);
-        foundCard = new StatCard("Found items", 0, "Waiting to be claimed", Icons.Glyph.CHECK, UiTheme.MINT);
-        claimsCard = new StatCard("Open claims", 0, "Needs verification", Icons.Glyph.TAG, UiTheme.AMBER);
-        usersCard = new StatCard("Users", 0, "Registered accounts", Icons.Glyph.USERS, UiTheme.VIOLET);
+        add(buildBody(), BorderLayout.CENTER);
+        refresh();
+    }
 
+    // --------------------------------------------------------------- layout
+
+    private javax.swing.JComponent buildBody() {
         JPanel cards = new JPanel(new GridLayout(1, 4, 14, 0));
         cards.setOpaque(false);
         cards.add(lostCard);
         cards.add(foundCard);
-        cards.add(claimsCard);
-        cards.add(usersCard);
+        cards.add(accountCard);
+        cards.add(ownCard);
 
-        table = ModernTable.style(new JTable(model));
-        table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        int[] widths = {190, 100, 110, 150, 140, 100};
-        for (int i = 0; i < widths.length; i++) {
-            table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
-        }
-        table.getColumnModel().getColumn(5).setCellRenderer(new StatusTableRenderer());
-
-        // The rows are stacked in a vertical box. Every row uses the same
-        // alignment, so all of them get the full width of the window.
         StretchPanel body = StretchPanel.vertical();
         body.setOpaque(false);
 
@@ -99,26 +111,12 @@ public class DashboardPanel extends JPanel {
         cards.setMaximumSize(new Dimension(Integer.MAX_VALUE, 132));
         cards.setMinimumSize(new Dimension(520, 132));
         body.add(cards);
-        body.add(Box.createVerticalStrut(14));
+        body.add(javax.swing.Box.createVerticalStrut(14));
 
-        JPanel charts = new JPanel(new GridLayout(1, 2, 14, 0));
-        charts.setOpaque(false);
-        charts.add(buildClaimsCard());
-        charts.add(buildLocationsCard());
-        charts.setAlignmentX(ROW_ALIGNMENT);
-        charts.setMaximumSize(new Dimension(Integer.MAX_VALUE, 240));
-        body.add(charts);
-        body.add(Box.createVerticalStrut(14));
+        body.add(buildPostsCard());
+        body.add(javax.swing.Box.createVerticalStrut(14));
 
-        JPanel items = buildItemsCard();
-        items.setAlignmentX(ROW_ALIGNMENT);
-        body.add(items);
-
-        hintLabel.setFont(Fonts.body(12));
-        hintLabel.setForeground(UiTheme.AMBER);
-        hintLabel.setAlignmentX(ROW_ALIGNMENT);
-        body.add(Box.createVerticalStrut(10));
-        body.add(hintLabel);
+        body.add(buildAccountsCard());
 
         JScrollPane scroll = new JScrollPane(body);
         scroll.setBorder(BorderFactory.createEmptyBorder());
@@ -127,52 +125,49 @@ public class DashboardPanel extends JPanel {
         scroll.getVerticalScrollBar().setOpaque(false);
         scroll.getVerticalScrollBar().setUnitIncrement(20);
         scroll.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-
-        add(scroll, BorderLayout.CENTER);
-        refresh();
+        return scroll;
     }
 
-    // ------------------------------------------------------------- panels
-
-    private JPanel buildClaimsCard() {
-        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
-        card.setLayout(new BorderLayout());
-        card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
-
-        card.add(sectionTitle("Claim pipeline"), BorderLayout.NORTH);
-
-        JPanel chartArea = new JPanel(new BorderLayout());
-        chartArea.setOpaque(false);
-        claimBar.setPreferredSize(new Dimension(320, 120));
-        claimBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
-        chartArea.add(claimBar, BorderLayout.CENTER);
-
-        card.add(chartArea, BorderLayout.CENTER);
-        return card;
-    }
-
-    private JPanel buildLocationsCard() {
-        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
-        card.setLayout(new BorderLayout(0, 10));
-        card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
-
-        card.add(sectionTitle("Busiest locations"), BorderLayout.NORTH);
-        barList.setPreferredSize(new Dimension(320, 170));
-        JPanel holder = new JPanel(new BorderLayout());
-        holder.setOpaque(false);
-        holder.add(barList, BorderLayout.CENTER);
-        card.add(holder, BorderLayout.CENTER);
-        return card;
-    }
-
-    private JPanel buildItemsCard() {
+    private JPanel buildPostsCard() {
         RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
         card.setLayout(new BorderLayout(0, 12));
         card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
-        card.add(sectionTitle("Recently reported items"), BorderLayout.NORTH);
+        card.add(sectionTitle("Recent lost posts"), BorderLayout.NORTH);
 
-        JScrollPane scroll = ModernTable.scroll(table);
-        scroll.setPreferredSize(new Dimension(600, 230));
+        postTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        postTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        int[] widths = {64, 185, 155, 160, 150, 150};
+        for (int i = 0; i < widths.length; i++) {
+            postTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        postTable.getColumnModel().getColumn(0).setCellRenderer(new PhotoRenderer());
+
+        postArea.setOpaque(false);
+        postArea.add(new EmptyState("No lost item has been posted yet",
+                "The board is empty - the first post will appear here."), "empty");
+        postArea.add(new JScrollPane(postTable), "table");
+
+        card.add(postArea, BorderLayout.CENTER);
+        return card;
+    }
+
+    private JPanel buildAccountsCard() {
+        RoundedPanel card = new RoundedPanel(UiTheme.R_LG, UiTheme.SURFACE, UiTheme.STROKE);
+        card.setLayout(new BorderLayout(0, 12));
+        card.setBorder(BorderFactory.createEmptyBorder(18, 20, 18, 20));
+        card.add(sectionTitle(viewer != null && viewer.isAdmin()
+                ? "All accounts" : "Registered students"), BorderLayout.NORTH);
+
+        accountTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        accountTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        int[] widths = {190, 220, 120, 110, 150};
+        for (int i = 0; i < widths.length; i++) {
+            accountTable.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        }
+        accountTable.getColumnModel().getColumn(3).setCellRenderer(new StatusTableRenderer());
+
+        JScrollPane scroll = ModernTable.scroll(accountTable);
+        scroll.setPreferredSize(new Dimension(600, 200));
         card.add(scroll, BorderLayout.CENTER);
         return card;
     }
@@ -184,64 +179,54 @@ public class DashboardPanel extends JPanel {
         return label;
     }
 
-    // ------------------------------------------------------------ refresh
+    // -------------------------------------------------------------- refresh
 
+    /** Reads the numbers and the rows from the database again. */
     public void refresh() {
-        DashboardStats stats = dashboardService.build(viewer);
+        var stats = dashboardService.build(viewer);
 
         lostCard.setValue(stats.getTotalLostItems());
-        lostCard.setDetail(stats.getTotalLostItems() + " reports from students");
+        lostCard.setDetail("waiting for their owner");
         foundCard.setValue(stats.getTotalFoundItems());
-        foundCard.setDetail(stats.getTotalFoundItems() + " waiting to be claimed");
-        claimsCard.setValue(stats.getOpenClaims());
-        claimsCard.setDetail(stats.getPendingVerification() + " pending verification");
+        foundCard.setDetail("nothing found yet");
 
-        if (viewer.isAdmin()) {
-            usersCard.setValue(stats.getTotalUsers());
-            usersCard.setDetail(stats.getActiveUsers() + " active · " + stats.getSuspendedUsers() + " suspended");
-        } else {
-            usersCard.setValue(stats.getMyLostReports() + stats.getMyFoundReports());
-            usersCard.setDetail(stats.getMyLostReports() + " lost · " + stats.getMyFoundReports() + " found by me");
-        }
+        List<User> accounts = services.userService().visibleAccounts(viewer, 100);
+        accountCard.setValue(accounts.size());
+        accountCard.setDetail(viewer != null && viewer.isAdmin()
+                ? "students and managers" : "registered students");
 
-        claimBar.setSlices(List.of(
-                new StackedBar.Slice("Open", stats.getOpenClaims(), UiTheme.AMBER),
-                new StackedBar.Slice("Approved", stats.getApprovedClaims(), UiTheme.MINT),
-                new StackedBar.Slice("Returned", stats.getReturnedItems(), UiTheme.ACCENT),
-                new StackedBar.Slice("Pending", stats.getPendingVerification(), UiTheme.VIOLET)));
-        claimBar.setTotalLabel("claims");
+        List<ItemSummary> own = postService.myPosts(viewer == null ? 0 : viewer.getId(), 100);
+        ownCard.setValue(own.size());
+        ownCard.setDetail(own.isEmpty() ? "nothing posted yet" : "posted by you");
 
-        barList.setItems(stats.getTopLocations());
-
-        model.setRowCount(0);
-        List<ItemSummary> items = stats.getRecentItems();
-        for (ItemSummary item : items) {
-            model.addRow(new Object[]{
-                    item.getTitle(),
-                    item.getType() == null ? "" : item.getType().label(),
-                    prettify(item.getCategory()),
-                    item.getLocationLabel(),
-                    item.getPostedByName(),
-                    item.getStatus() == null ? "OPEN" : item.getStatus()});
-        }
-
-        List<String> missing = dashboardService.missingSegments();
-        if (missing.isEmpty()) {
-            hintLabel.setText("All four segments are connected — every card above is live data.");
-            hintLabel.setForeground(UiTheme.MINT);
-        } else {
-            hintLabel.setText("Waiting for: " + String.join("  ·  ", missing)
-                    + "   —   these cards fill in automatically once they register their service.");
-            hintLabel.setForeground(UiTheme.AMBER);
-        }
+        loadPosts();
+        loadAccounts(accounts);
     }
 
-    private String prettify(String category) {
-        if (category == null || category.isBlank()) {
-            return "-";
+    private void loadPosts() {
+        List<ItemSummary> posts = postService.openLostPosts(50);
+        postModel.setRowCount(0);
+        for (ItemSummary post : posts) {
+            postModel.addRow(new Object[]{
+                    post.getImagePath(),
+                    post.getTitle(),
+                    com.bubt.findit.core.model.ItemCategory.fromString(post.getCategory()).label(),
+                    post.getLocationLabel(),
+                    post.getPostedByName(),
+                    post.getCreatedAt() == null ? "" : post.getCreatedAt().format(DATE)});
         }
-        String value = category.replace('_', ' ').toLowerCase();
-        return Character.toUpperCase(value.charAt(0)) + value.substring(1);
+        postCards.show(postArea, posts.isEmpty() ? "empty" : "table");
     }
 
+    private void loadAccounts(List<User> accounts) {
+        accountModel.setRowCount(0);
+        for (User user : accounts) {
+            accountModel.addRow(new Object[]{
+                    user.getFullName(),
+                    user.getEmail(),
+                    user.getStudentId(),
+                    user.getRole().label(),
+                    user.getCreatedAt() == null ? "" : user.getCreatedAt().format(DATE)});
+        }
+    }
 }
